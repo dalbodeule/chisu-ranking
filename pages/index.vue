@@ -3,7 +3,7 @@ const route = useRoute()
 </script>
 
 <template>
-  <div>
+  <div class="prose">
     <h1>Cloudflare Template</h1>
   </div>
 </template>

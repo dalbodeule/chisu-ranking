@@ -1,6 +1,6 @@
 import {drizzle} from "drizzle-orm/d1/driver";
 
-import schema from '../db/schema'
+import schema from '~/server/database/schema'
 
 export function useDrizzle() {
     return drizzle(hubDatabase(), {
