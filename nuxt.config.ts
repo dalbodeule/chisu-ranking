@@ -13,6 +13,14 @@ export default defineNuxtConfig({
     database: true,
     blob: true,
   },
+  runtimeConfig: {
+    chzzk: {
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      redirectUri: process.env.REDIRECT_URI,
+      apiCallUri: process.env.API_CALLURI
+    }
+  },
   nitro: {
     experimental: {
       tasks: true
