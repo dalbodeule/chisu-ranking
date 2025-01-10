@@ -1,16 +1,24 @@
 <script setup lang="ts">
 import type { Ref } from "vue";
+import {computedAsync} from "@vueuse/core";
+import type {IChzzkChannel} from "~/server/utils/chzzkApi";
+
+const { $csrfFetch } = useNuxtApp()
 
 const show: Ref<boolean> = ref(false)
-const _user = useUserSession()
+const { user, loggedIn } = useUserSession()
 
-const config = useRuntimeConfig()
-
-const menus: { text: string, to: string, inner: boolean, blank: boolean }[] = [
-    { text: '소개', to: "/intro" , inner: true, blank: false },
-    { text: '서비스', to: "/service" , inner: true, blank: false },
-    { text: '로그인', to: '/api/auth/login', inner: false, blank: false }
-]
+// const config = useRuntimeConfig()
+const chzzkProfile = computedAsync(async () => {
+  if(user.value?.channelId)
+    return await $csrfFetch("/api/chzzk/user", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: user.value.channelId
+      })
+    }) as IChzzkChannel
+  else return null
+})
 </script>
 
 <template>
@@ -29,21 +37,38 @@ const menus: { text: string, to: string, inner: boolean, blank: boolean }[] = [
       </div>
 
       <!-- 오른쪽 요소 -->
-      <div class="hidden md:flex space-x-4">
-        <template v-for="(menu, idx) in menus" :key="`navpc-${idx}`">
-          <NuxtLink v-if="menu.inner" :to="menu.to" class="text-gray-700 hover:text-blue-500">{{ menu.text }}</NuxtLink>
-          <a v-else :href="menu.to" class="text-sm font-bold text-gray-500 dark:text-gray-400" :target="menu.blank ? '_blank' : ''">{{ menu.text }}</a>
-        </template>
+      <div class="hidden md:flex space-x-4 items-center" v-if="!loggedIn">
+        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+        <NuxtLink to="/login" class="text-gray-700 hover:text-blue-500">로그인</NuxtLink>
+      </div>
+      <div class="hidden md:flex space-x-4 items-center" v-else>
+        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+        <NuxtLink to="/logout" class="text-gray-700 hover:text-blue-500">로그아웃</NuxtLink>
+        <div class="text-gray-700 flex flex-row gap-[20px] items-center">
+          <span>{{ chzzkProfile?.channelName }}</span>
+          <img class="w-[36px] h-[36px]" :src="chzzkProfile?.channelImageUrl" :alt="`${chzzkProfile?.channelName} 프로필 이미지`" />
+        </div>
       </div>
     </div>
 
     <!-- 모바일 메뉴 -->
     <div v-if="show" class="md:hidden bg-white overflow-hidden" style="max-height: 600px;">
-      <div class="flex flex-col space-y-2 py-4 px-4">
-        <template v-for="(menu, idx) in menus" :key="`navmov-${idx}`">
-          <NuxtLink v-if="!menu.inner" :to="menu.to" class="text-gray-700 hover:text-blue-500">{{ menu.text }}</NuxtLink>
-          <a v-else :href="menu.to" class="text-sm font-bold text-gray-500 dark:text-gray-400" :target="menu.blank ? '_blank' : ''">{{ menu.text }}</a>
-        </template>
+      <!-- 오른쪽 요소 -->
+      <div class="flex flex-col space-y-2 py-4 px-4" v-if="!loggedIn">
+        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+        <NuxtLink to="/login" class="text-gray-700 hover:text-blue-500">로그인</NuxtLink>
+      </div>
+      <div class="flex flex-col space-y-2 py-4 px-4" v-else>
+        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+        <NuxtLink to="/logout" class="text-gray-700 hover:text-blue-500">로그아웃</NuxtLink>
+        <div class="text-gray-700 flex flex-row gap-[20px] items-center">
+          <span>{{ chzzkProfile?.channelName ?? "???" }}</span>
+          <img v-if="chzzkProfile?.channelImageUrl" class="w-[36px] h-[36px]" :src="chzzkProfile?.channelImageUrl" :alt="`${chzzkProfile?.channelName} 프로필 이미지`" />
+        </div>
       </div>
     </div>
   </nav>

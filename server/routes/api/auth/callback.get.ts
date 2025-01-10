@@ -32,11 +32,18 @@ const url = 'https://openapi.chzzk.naver.com'
 export default defineEventHandler(async(event) => {
     const config = useRuntimeConfig(event)
 
-    const { code, state} = getQuery(event)
+    const { code, state } = getQuery(event) as { code?: string, state?: string }
 
     if(!code || !state) throw createError({
         statusCode: 400,
         message: 'Unauthorized',
+    })
+
+    const session = await getUserSession(event)
+
+    if(session.state != state) throw createError({
+        statusCode: 400,
+        message: 'State is wrong',
     })
 
     const reqBody: ITokenRequest = {
@@ -91,7 +98,7 @@ export default defineEventHandler(async(event) => {
         await db.insert(schema.Users).values({
             userId: user.content.channelId,
             name: user.content.channelName,
-        }).returning()
+        }).execute()
     } else {
         await db.update(schema.Users).set({
             name: user.content.channelName
@@ -103,9 +110,9 @@ export default defineEventHandler(async(event) => {
             channelId: user.content.channelId,
             name: user.content.channelName,
         },
-        secure: {
-            accessToken: token.content.accessToken,
-        }
+        accessToken: token.content.accessToken,
+        refreshToken: token.content.refreshToken,
+        state,
     })
 
     return sendRedirect(event, '/')

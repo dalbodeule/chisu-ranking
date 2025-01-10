@@ -10,10 +10,3 @@ export default {
 export const usersRelations = relations(Users, ({ many }) => ({
     posts: many(Pages)
 }))
-
-export const pagesRelations = relations(Pages, ({ one }) => ({
-    author: one(Users, {
-        fields: [Pages.userId],
-        references: [Users.userId]
-    })
-}))
