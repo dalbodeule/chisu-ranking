@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import MarkdownIt from 'markdown-it'
+import ToastViewer from "~/components/ToastViewer.vue";
 
 const props = defineProps<{
-  modelValue: string
+  modelValue: string,
+  id: string,
+  isEditor: boolean,
 }>()
 
 const emit = defineEmits<{
@@ -10,31 +12,20 @@ const emit = defineEmits<{
 }>()
 
 const markdown = ref(props.modelValue ?? "")
-const md = new MarkdownIt()
-const htmlContent = ref(md.render(markdown.value))
-
-const updateContent = () => {
-  htmlContent.value = md.render(markdown.value)
-  emit('update:modelValue', markdown.value)
-}
 
 watch(() => props.modelValue, (newVal) => {
   if (newVal !== markdown.value) {
     markdown.value = newVal
-    htmlContent.value = md.render(newVal)
+    emit('update:modelValue', markdown.value)
   }
 })
 </script>
 
 <template>
   <div>
-    <textarea v-model="markdown" @input="updateContent" class="w-full p-2 border rounded-md"></textarea>
-    <div class="prose mt-4" v-html="htmlContent"></div>
+    <ClientOnly>
+      <ToastEditor :modelValue="markdown" :id="id" @update:modelValue="markdown = $event" v-if="isEditor"/>
+      <ToastViewer :modelValue="markdown" :id="id" v-else />
+    </ClientOnly>
   </div>
 </template>
-
-<style scoped>
-  textarea {
-    min-height: 200px;
-  }
-</style>

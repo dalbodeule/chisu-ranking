@@ -17,7 +17,10 @@ export interface Section {
   form?: Field[]
 }
 
-const props = defineProps<{ section: Section}>()
+const props = defineProps<{
+  section: Section,
+  isEditor: boolean,
+}>()
 const emit = defineEmits<{
   'update': [Section]
   'remove': []
@@ -51,6 +54,8 @@ const removeSection = () => {
       :modelValue="section.content"
       :table="section.table"
       :form="section.form"
+      :id="section.id"
+      :isEditor="isEditor"
       @update="updateSection"
       @remove="removeSection"
     />
