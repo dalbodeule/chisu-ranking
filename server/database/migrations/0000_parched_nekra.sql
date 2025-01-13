@@ -1,6 +1,7 @@
 CREATE TABLE `pages` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`userId` text,
+	`userId` text(32),
+	`contentId` text(64),
 	`content` text,
 	`created_at` integer DEFAULT (STRFTIME('%s')) NOT NULL,
 	`updated_at` integer DEFAULT (STRFTIME('%s')) NOT NULL,
@@ -8,8 +9,7 @@ CREATE TABLE `pages` (
 );
 --> statement-breakpoint
 CREATE TABLE `users` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`userId` text(32) NOT NULL,
+	`userId` text(32) NOT NULL PRIMARY KEY,
 	`name` text(80) NOT NULL,
 	`created_at` integer DEFAULT (STRFTIME('%s')) NOT NULL,
 	`updated_at` integer DEFAULT (STRFTIME('%s')) NOT NULL

@@ -1,31 +1,42 @@
 <script setup lang="ts">
 import ToastViewer from "~/components/ToastViewer.vue";
+import type {Section} from "~/components/Section.vue";
 
 const props = defineProps<{
-  modelValue: string,
+  section: Section
   id: string,
   isEditor: boolean,
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [string]
+  'update': [Section]
 }>()
 
-const markdown = ref(props.modelValue ?? "")
+const section = ref(props.section)
+const isUpdating: Ref<boolean> = ref(false)
 
-watch(() => props.modelValue, (newVal) => {
-  if (newVal !== markdown.value) {
-    markdown.value = newVal
-    emit('update:modelValue', markdown.value)
-  }
-})
+const updateValue = (value: string) => {
+  const newSection = { ...section.value } as Section
+  newSection.content = value
+
+
+  emit('update', newSection)
+}
+
+watch(() => section.value.content,
+  (newVal) => {
+    isUpdating.value = true
+    updateValue(newVal ?? "")
+    isUpdating.value = false
+  }, { deep: true }
+)
 </script>
 
 <template>
   <div>
     <ClientOnly>
-      <ToastEditor :modelValue="markdown" :id="id" @update:modelValue="markdown = $event" v-if="isEditor"/>
-      <ToastViewer :modelValue="markdown" :id="id" v-else />
+      <ToastEditor :modelValue="section.content!!" :id="id" @update:modelValue="updateValue" v-if="isEditor" />
+      <ToastViewer :modelValue="section.content!!" :id="id" v-else />
     </ClientOnly>
   </div>
 </template>

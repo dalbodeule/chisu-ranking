@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {useDocumentStore} from "~/stores/documentStore";
 import type {Section} from "~/components/Section.vue";
+import type {GetPage} from "~/server/routes/api/[userId]/[pageName].get";
+const { $csrfFetch } = useNuxtApp()
 
 const route = useRoute()
 
@@ -20,12 +22,27 @@ const removeSection = (index: number) => {
   store.removeSection(index)
 }
 
+const savePage = async () => {
+
+}
+
+const loadPage = async () => {
+  const data = await $csrfFetch(`/api/${userId}/${pageName}`, {
+    method: 'GET'
+  }) as GetPage | undefined
+
+  if(data) {
+    store.loadDocument(data.content)
+  }
+}
+
 const isEditor = computed(() => {
-  console.log(user.value, loggedIn.value)
   if(loggedIn.value)
     return user.value.channelId === userId
   else return false
 })
+
+onMounted(async () => loadPage)
 
 </script>
 
@@ -36,14 +53,14 @@ const isEditor = computed(() => {
     <div class="mt-6 space-y-6">
       <Section
           v-for="(section, index) in sections"
-          :key="section.id"
+          :key="`${section.id}`"
           :section="section"
           :isEditor="isEditor"
           @update="updateSection(index, $event)"
           @remove="removeSection(index)"
       />
     </div>
-    <SaveLoadButtons :userId="userId" :pageName="pageName" v-if="isEditor" />
+    <SaveLoadButtons :userId="userId" :pageName="pageName" v-if="isEditor" @submit="savePage" @load="loadPage"/>
   </div>
 </template>
 

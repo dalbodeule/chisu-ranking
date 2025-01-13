@@ -16,7 +16,7 @@ const emit = defineEmits<{
   'insert:image': []
 }>()
 
-const editor = ref(props.id)
+const editor = ref(`${props.id}`)
 
 onMounted(() => {
   const e = new Editor({

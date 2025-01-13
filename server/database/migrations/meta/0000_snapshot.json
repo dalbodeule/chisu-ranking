@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "2d78e93e-05d1-4255-a887-39380642cc94",
+  "id": "731467e7-807b-4054-bd5e-5e3979088280",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "pages": {
@@ -17,6 +17,13 @@
         "userId": {
           "name": "userId",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "contentId": {
+          "name": "contentId",
+          "type": "text(64)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

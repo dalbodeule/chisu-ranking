@@ -12,7 +12,7 @@ const props = defineProps<{
   id: string
 }>()
 
-const viewer = ref(props.id)
+const viewer = ref(`${props.id}`)
 
 onMounted(() => {
   const v = Editor.factory({

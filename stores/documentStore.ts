@@ -17,11 +17,11 @@ export const useDocumentStore = defineStore('document', {
         saveDocument(): string {
             return JSON.stringify(this.sections, null, 2)
         },
-        loadDocument(json: string) {
+        loadDocument(data: string) {
             try {
-                this.sections = JSON.parse(json)
+                this.sections = JSON.parse(data)
             } catch(e) {
-                console.error(`JSON Parse error! ${e}`)
+                console.error(`Error! ${e}`)
             }
         }
     },

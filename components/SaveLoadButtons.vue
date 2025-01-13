@@ -3,19 +3,18 @@ import { useDocumentStore } from "~/stores/documentStore";
 
 const store = useDocumentStore()
 
+const emit = defineEmits<{
+  'submit': [string],
+  'load': []
+}>()
+
 const save = () => {
   const json = store.saveDocument()
-  console.log(json)
+  emit('submit', json)
 }
 
 const load = () => {
-  const json = ''
-
-  if(json) {
-    store.loadDocument(json)
-  } else {
-
-  }
+  emit('load')
 }
 
 </script>
