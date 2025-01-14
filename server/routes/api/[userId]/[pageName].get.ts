@@ -1,7 +1,6 @@
 import schema from "~/server/database/schema";
-import {and, eq, sql} from "drizzle-orm";
+import {and, eq} from "drizzle-orm";
 export interface GetUser {
-    id: number,
     userId: string,
     name: string,
     created_at: Date,

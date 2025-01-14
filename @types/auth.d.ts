@@ -8,6 +8,7 @@ declare module '#auth-utils' {
         state: string,
         accessToken?: string,
         refreshToken?: string,
+        user: User
     }
 
     interface SecureSessionData {

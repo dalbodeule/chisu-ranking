@@ -60,6 +60,8 @@ const removeSection = () => {
       @update="updateSection"
       @remove="removeSection"
     />
-    <button @click="$emit('remove')" type="button" class="mt-2 px-3 py-1 bg-red-500 text-white rounded">섹션 삭제</button>
+    <button @click="$emit('remove')" type="button" v-if="isEditor"
+        class="mt-2 px-3 py-1 bg-red-500 text-white rounded"
+    >섹션 삭제</button>
   </div>
 </template>

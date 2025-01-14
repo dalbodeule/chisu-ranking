@@ -4,7 +4,10 @@ import type {Column, Row} from "~/components/TableEditor.vue";
 import type {Field} from "~/components/FormEditor.vue";
 
 
-const props = defineProps<{section: Section}>()
+const props = defineProps<{
+  section: Section,
+  isEditor: boolean
+}>()
 const emit = defineEmits<{
   'update': [Section]
 }>()
@@ -56,9 +59,10 @@ const updateFormFields = (fields: Field[]) => {
     <TableEditor
       :columns="section.table!!.columns"
       :modelValue="section.table!!.rows"
+      :isEditor="isEditor"
       @update:modelValue="updateTableRows"
     />
-    <FormEditor
+    <FormEditor v-if="isEditor"
       :columns="section.table!!.columns"
       :fields="section.form!!"
       @update:fields="updateFormFields"

@@ -21,6 +21,7 @@ export interface Column {
 const props = defineProps<{
   columns: Column[]
   modelValue: Row[]
+  isEditor: boolean
 }>()
 
 const emit = defineEmits<{
@@ -81,10 +82,10 @@ watch(rows, (newRows: Row[]) => {
       <tr>
         <th class="px-2 py-2 border">순위</th>
         <th v-for="col in columns" :key="col.id" class="px-4 py-2 border">{{ col.name }}</th>
-        <th class="px-4 py-2 border">작업</th>
+        <th class="px-4 py-2 border" v-if="isEditor">작업</th>
       </tr>
       </thead>
-      <Draggable tag="tbody" v-model="rows" @end="onDragEnd">
+      <Draggable tag="tbody" v-model="rows" @end="onDragEnd" :move="() => isEditor">
         <tr v-for="(row, rowIndex) in rows" :key="row.id" class="border text-center">
           <td class="px-2 py-2 border">{{ rowIndex + 1 }}</td>
           <td v-for="col in columns" :key="col.id" class="px-4 py-2 border">
@@ -113,7 +114,7 @@ watch(rows, (newRows: Row[]) => {
               </select>
             </div>
           </td>
-          <td class="px-4 py-2 border">
+          <td class="px-4 py-2 border" v-if="isEditor">
             <button
                 v-if="!isEditingRow(row.id)"
                 @click="startEditing(row)"
@@ -141,7 +142,7 @@ watch(rows, (newRows: Row[]) => {
         </tr>
       </Draggable>
     </table>
-    <button
+    <button v-if="isEditor"
         @click="addRow"
         type="button"
         class="mt-4 px-4 py-2 bg-green-500 text-white rounded"

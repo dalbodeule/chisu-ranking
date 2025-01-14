@@ -21,18 +21,39 @@ const updateSection = (index: number, updatedSection: Section) => {
 const removeSection = (index: number) => {
   store.removeSection(index)
 }
+const loadPage = async () => {
+  try {
+    const data = await $csrfFetch(`/api/${userId}/${pageName}`, {
+      method: 'GET'
+    }) as GetPage | undefined
 
-const savePage = async () => {
-
+    if (data) {
+      store.loadDocument(data.content)
+    } else {
+      throw Error("Could not load document")
+    }
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-const loadPage = async () => {
-  const data = await $csrfFetch(`/api/${userId}/${pageName}`, {
-    method: 'GET'
-  }) as GetPage | undefined
+const submitPage = async() => {
+  try {
+    const result = await $csrfFetch(`/api/${userId}/${pageName}`, {
+      method: 'POST',
+      body: JSON.stringify({ content: store.saveDocument() }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }) as GetPage | undefined
 
-  if(data) {
-    store.loadDocument(data.content)
+    if (result) {
+
+    } else {
+      throw Error('Failed to save document')
+    }
+  } catch(e) {
+    console.error(e)
   }
 }
 
@@ -42,7 +63,7 @@ const isEditor = computed(() => {
   else return false
 })
 
-onMounted(async () => loadPage)
+onMounted(async () => await loadPage())
 
 </script>
 
@@ -60,7 +81,7 @@ onMounted(async () => loadPage)
           @remove="removeSection(index)"
       />
     </div>
-    <SaveLoadButtons :userId="userId" :pageName="pageName" v-if="isEditor" @submit="savePage" @load="loadPage"/>
+    <SaveLoadButtons :userId="userId" :pageName="pageName" v-if="isEditor" @submit="submitPage" @load="loadPage"/>
   </div>
 </template>
 
