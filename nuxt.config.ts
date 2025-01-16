@@ -9,6 +9,9 @@ export default defineNuxtConfig({
   css: [
     "@/assets/tailwind.scss",
   ],
+  build: {
+    transpile: ["@pinia/nuxt", "Dayjs"]
+  },
   hub: {
     database: true,
     blob: true,

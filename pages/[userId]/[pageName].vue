@@ -21,6 +21,7 @@ const updateSection = (index: number, updatedSection: Section) => {
 const removeSection = (index: number) => {
   store.removeSection(index)
 }
+
 const loadPage = async () => {
   try {
     const data = await $csrfFetch(`/api/${userId}/${pageName}`, {
@@ -29,10 +30,22 @@ const loadPage = async () => {
 
     if (data) {
       store.loadDocument(data.content)
+
+      useSeoMeta({
+        title: `${data.author.name} - ${data.pagename} :: 치수랭킹`,
+        description: data.content.substring(0, 150),
+        ogType: 'website',
+        ogUrl: `https://ranking.mori.space/${userId}/${pageName}`
+      })
     } else {
       throw Error("Could not load document")
     }
   } catch (e) {
+    useSeoMeta({
+      title: '치수랭킹',
+      description: '페이지를 불러오지 못했습니다.',
+      ogType: 'website',
+    })
     console.error(e)
   }
 }
@@ -61,6 +74,12 @@ const isEditor = computed(() => {
   if(loggedIn.value)
     return user.value.channelId === userId
   else return false
+})
+
+useSeoMeta({
+  title: '로딩중... :: 치수랭킹',
+  description: '페이지를 불러오는 중입니다.',
+  ogType: 'website',
 })
 
 onMounted(async () => await loadPage())

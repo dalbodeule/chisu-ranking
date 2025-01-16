@@ -10,7 +10,7 @@ const { user, loggedIn } = useUserSession()
 
 // const config = useRuntimeConfig()
 const chzzkProfile = computedAsync(async () => {
-  if(user.value?.channelId)
+  if(loggedIn && user.value?.channelId)
     return await $csrfFetch("/api/chzzk/user", {
       method: "POST",
       body: JSON.stringify({
@@ -47,7 +47,7 @@ const chzzkProfile = computedAsync(async () => {
         <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
         <NuxtLink to="/logout" class="text-gray-700 hover:text-blue-500">로그아웃</NuxtLink>
         <div class="text-gray-700 flex flex-row gap-[20px] items-center">
-          <span>{{ chzzkProfile?.channelName }}</span>
+          <NuxtLink :to="`/${chzzkProfile?.channelId}`" class="text-gray-700 hover:text-blue-500">{{ chzzkProfile?.channelName }}</NuxtLink>
           <img class="w-[36px] h-[36px]" :src="chzzkProfile?.channelImageUrl" :alt="`${chzzkProfile?.channelName} 프로필 이미지`" />
         </div>
       </div>
