@@ -37,18 +37,18 @@ const chzzkProfile = computedAsync(async () => {
       </div>
 
       <!-- 오른쪽 요소 -->
-      <div class="hidden md:flex space-x-4 items-center" v-if="!loggedIn">
-        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
-        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+      <div v-if="!loggedIn" class="hidden md:flex space-x-4 items-center">
+        <!-- <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink> -->
         <NuxtLink to="/login" class="text-gray-700 hover:text-blue-500">로그인</NuxtLink>
       </div>
-      <div class="hidden md:flex space-x-4 items-center" v-else>
-        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
-        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+      <div v-else class="hidden md:flex space-x-4 items-center">
+        <!-- <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink> -->
         <NuxtLink to="/logout" class="text-gray-700 hover:text-blue-500">로그아웃</NuxtLink>
         <div class="text-gray-700 flex flex-row gap-[20px] items-center">
           <NuxtLink :to="`/${chzzkProfile?.channelId}`" class="text-gray-700 hover:text-blue-500">{{ chzzkProfile?.channelName }}</NuxtLink>
-          <img class="w-[36px] h-[36px]" :src="chzzkProfile?.channelImageUrl" :alt="`${chzzkProfile?.channelName} 프로필 이미지`" />
+          <img class="w-[36px] h-[36px] rounded-[48px] border border-gray-500" :src="chzzkProfile?.channelImageUrl" :alt="`${chzzkProfile?.channelName} 프로필 이미지`" >
         </div>
       </div>
     </div>
@@ -56,18 +56,18 @@ const chzzkProfile = computedAsync(async () => {
     <!-- 모바일 메뉴 -->
     <div v-if="show" class="md:hidden bg-white overflow-hidden" style="max-height: 600px;">
       <!-- 오른쪽 요소 -->
-      <div class="flex flex-col space-y-2 py-4 px-4" v-if="!loggedIn">
-        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
-        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+      <div v-if="!loggedIn" class="flex flex-col space-y-2 py-4 px-4">
+        <!-- <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink> -->
         <NuxtLink to="/login" class="text-gray-700 hover:text-blue-500">로그인</NuxtLink>
       </div>
-      <div class="flex flex-col space-y-2 py-4 px-4" v-else>
-        <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
-        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink>
+      <div v-else class="flex flex-col space-y-2 py-4 px-4">
+        <!-- <NuxtLink to="/intro" class="text-gray-700 hover:text-blue-500">소개</NuxtLink>
+        <NuxtLink to="/service" class="text-gray-700 hover:text-blue-500">서비스</NuxtLink> -->
         <NuxtLink to="/logout" class="text-gray-700 hover:text-blue-500">로그아웃</NuxtLink>
         <div class="text-gray-700 flex flex-row gap-[20px] items-center">
-          <span>{{ chzzkProfile?.channelName ?? "???" }}</span>
-          <img v-if="chzzkProfile?.channelImageUrl" class="w-[36px] h-[36px]" :src="chzzkProfile?.channelImageUrl" :alt="`${chzzkProfile?.channelName} 프로필 이미지`" />
+          <NuxtLink :to="`/${chzzkProfile?.channelId}`" class="text-gray-700 hover:text-blue-500">{{ chzzkProfile?.channelName }}</NuxtLink>
+          <img v-if="chzzkProfile?.channelImageUrl" class="w-[36px] h-[36px]" :src="chzzkProfile?.channelImageUrl" :alt="`${chzzkProfile?.channelName} 프로필 이미지`" >
         </div>
       </div>
     </div>

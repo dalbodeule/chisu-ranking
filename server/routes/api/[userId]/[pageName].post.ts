@@ -1,6 +1,6 @@
 import schema from "~/server/database/schema";
 import {and, eq} from "drizzle-orm";
-import {GetPage} from "~/server/routes/api/[userId]/[pageName].get";
+import type {GetPage} from "~/server/routes/api/[userId]/[pageName].get";
 
 export interface PostPage {
     content: string,
@@ -85,7 +85,7 @@ export default defineEventHandler(async(event) => {
         created_at: page.created_at,
         updated_at: page.updated_at,
         author: {
-            ...page.author!!
+            ...page.author!
         }
     }
 

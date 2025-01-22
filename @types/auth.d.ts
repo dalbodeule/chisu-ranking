@@ -12,6 +12,6 @@ declare module '#auth-utils' {
     }
 
     interface SecureSessionData {
-
+        test: string
     }
 }

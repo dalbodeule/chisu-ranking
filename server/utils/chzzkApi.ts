@@ -14,7 +14,7 @@ export interface IChzzkChannel {
 const url = "https://api.chzzk.naver.com"
 const _USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Whale/4.29.282.14 Safari/537.36"
 
-export const getChzzkUserInfo = async (userId: String): Promise<IChzzkData<IChzzkChannel>> => {
+export const getChzzkUserInfo = async (userId: string): Promise<IChzzkData<IChzzkChannel>> => {
     return await $fetch(`${url}/service/v1/channels/${userId}`, {
         method: 'GET',
         headers: {

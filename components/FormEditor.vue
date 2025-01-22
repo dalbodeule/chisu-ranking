@@ -40,7 +40,7 @@ const addField = () => {
 
 const addOptions = (index: number, content: string) => {
   if(fields.value[index].options) {
-    fields.value[index].options!!.push(content)
+    fields.value[index].options!.push(content)
   } else {
     fields.value[index].options = [content]
   }
@@ -52,7 +52,7 @@ const removeOptions = (index: number) => {
     const field = fields.value[index].options?.find(option => option == selectedField.value)
     if(!field) return
 
-    const propIdx = fields.value[index].options!!.indexOf(field)
+    const propIdx = fields.value[index].options!.indexOf(field)
     fields.value.splice(propIdx, 1)
   }
   emit('update:fields', fields.value);
@@ -107,11 +107,12 @@ watch(
             <option value="number">숫자</option>
             <option value="select">선택</option>
           </select>
-          <input v-model="field.label" placeholder="필드 라벨" class="flex-1 p-2 border rounded" @input="updateFields"/>
-          <button @click="removeField(index)" type="button" class="px-2 py-1 bg-red-500 text-white rounded">삭제</button>
+          <input v-model="field.label" placeholder="필드 라벨" class="flex-1 p-2 border rounded" @input="updateFields">
+          <button type="button" class="px-2 py-1 bg-red-500 text-white rounded" @click="removeField(index)">삭제</button>
         </div>
         <div class="mt-2">
-          <component :is="getComponent(field.type)" v-model="field.value" v-if="field.type !== 'select'"
+          <component
+:is="getComponent(field.type)" v-if="field.type !== 'select'" v-model="field.value"
             class="w-full p-2 border rounded" placeholder="기본값을 입력하세요."
           />
           <div v-else class="flex flex-row gap-[20px] w-full">
@@ -122,7 +123,7 @@ watch(
             </select>
             <button type="button" class="mb-4 px-4 py-2 bg-red-500 text-white rounded" @click="removeOptions(index)">옵션 삭제</button>
             <form class="flex flex-row gap-[20px]" @submit.prevent="addOptions(index, requireAdd)">
-              <input type="text" v-model="requireAdd" class="border rounded" placeholder="옵션을 입력하세요." />
+              <input v-model="requireAdd" type="text" class="border rounded" placeholder="옵션을 입력하세요." >
               <button type="submit" class="mb-4 px-4 py-2 bg-green-500 text-white rounded">추가</button>
             </form>
           </div>
@@ -130,7 +131,7 @@ watch(
       </div>
     </Draggable>
     <div class="flex items-center space-x-2">
-      <button @click="addField" type="button" class="mb-4 px-4 py-2 bg-blue-500 text-white rounded">필드 추가</button>
+      <button type="button" class="mb-4 px-4 py-2 bg-blue-500 text-white rounded" @click="addField">필드 추가</button>
     </div>
   </div>
 </template>

@@ -63,7 +63,7 @@ onMounted(async () => await loadPage())
           :src="chzzkProfile.channelImageUrl"
           alt="User Profile Image"
           class="w-16 h-16 rounded-full border-2 border-gray-300"
-      />
+      >
       <p v-else class="text-gray-500">Loading profile image...</p>
     </div>
 

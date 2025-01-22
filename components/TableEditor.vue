@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, ref, watch } from 'vue'
 import { VueDraggableNext as Draggable } from 'vue-draggable-next'
+import SearchableSelect from "~/components/SearchableSelect.vue";
+import ModalElement from "~/components/ModalElement.vue";
 
 export type IFormTypes = 'text' | 'number' | 'select'
 
@@ -31,24 +33,37 @@ const emit = defineEmits<{
 const rows: Ref<Row[]> = ref([...props.modelValue])
 
 const editingRowId = ref<number | null>(null)
+const editingRowIdx = ref<number | null>(null)
 const editRow = ref<Row>({} as Row)
 
 const isEditingRow = (rowId: number) => {
   return editingRowId.value === rowId
 }
 
-const startEditing = (row: Row) => {
+const startEditing = (row: Row, rowIndex: number) => {
+  saveEditing(editingRowId.value!, false)
   editingRowId.value = row.id
+  editingRowIdx.value = rowIndex
   editRow.value = { ...row } // Clone the row to prevent mutating original
 }
 
-const saveEditing = (rowIndex: number) => {
+const saveEditing = (rowIndex: number, rowRelease: boolean = true) => {
   if (editRow.value != null) {
     rows.value[rowIndex] = { ...editRow.value } // Assign clone to ensure reactivity
-    editingRowId.value = null
-    editRow.value = { id: 0 }
     emit('update:modelValue', rows.value)
+
+    if(rowRelease) {
+      editingRowId.value = null
+      editingRowIdx.value = null
+      editRow.value = { } as Row
+    }
   }
+}
+
+const cancelEditing = () => {
+  editingRowId.value = null
+  editingRowIdx.value = null
+  editRow.value = { } as Row
 }
 
 const addRow = () => {
@@ -69,6 +84,26 @@ const onDragEnd = () => {
   emit('update:modelValue', rows.value)
 }
 
+const reOrderModal: Ref<InstanceType<typeof ModalElement> | null> = ref(null)
+const reOrderIndex: Ref<number | null> = ref(null)
+const openReorderModal = async (rowIndex: number) => {
+  const result = await reOrderModal.value?.open()
+
+  if(reOrderIndex.value == null) {
+    return
+  }
+
+  if(result) {
+    const targetIndex = reOrderIndex.value - 1;
+
+    // `targetIndex`가 배열 범위 내에 있어야 함
+    if (targetIndex >= 0 && targetIndex <= rows.value.length) {
+      const itemToMove = rows.value.splice(rowIndex, 1)[0];
+      rows.value.splice(targetIndex, 0, itemToMove); // `targetIndex` 위치로 삽입
+    }
+  }
+}
+
 // Watch for changes in rows and emit updates
 watch(rows, (newRows: Row[]) => {
   emit('update:modelValue', newRows)
@@ -82,73 +117,109 @@ watch(rows, (newRows: Row[]) => {
       <tr>
         <th class="px-2 py-2 border">순위</th>
         <th v-for="col in columns" :key="col.id" class="px-4 py-2 border">{{ col.name }}</th>
-        <th class="px-4 py-2 border" v-if="isEditor">작업</th>
+        <th v-if="isEditor" class="px-4 py-2 border">작업</th>
       </tr>
       </thead>
-      <Draggable tag="tbody" v-model="rows" @end="onDragEnd" :move="() => isEditor">
+      <Draggable v-model="rows" tag="tbody" :move="() => isEditor && editingRowId == null" @end="onDragEnd">
         <tr v-for="(row, rowIndex) in rows" :key="row.id" class="border text-center">
-          <td class="px-2 py-2 border">{{ rowIndex + 1 }}</td>
+          <td class="px-2 py-2 border">
+            {{ rowIndex + 1 }}
+            
+            <button
+                v-if="isEditingRow(row.id)"
+                type="button"
+                class="px-4 py-1 bg-blue-600 text-white rounded"
+                @click="openReorderModal(rowIndex)"
+            >
+              옮기기
+            </button>
+          </td>
           <td v-for="col in columns" :key="col.id" class="px-4 py-2 border">
             <span v-if="!isEditingRow(row.id)">
               {{ row[col.key] }}
             </span>
             <div v-else>
               <!-- `select` 타입과 다른 타입을 구분 -->
-              <input v-if="col.type == 'text'"
+              <input
+v-if="col.type == 'text'"
                   v-model="editRow[col.key]"
                   class="w-full p-2 border rounded"
-              />
-              <input v-else-if="col.type == 'number'"
+              >
+              <input
+v-else-if="col.type == 'number'"
                      v-model="editRow[col.key]"
                      class="w-full p-2 border rounded"
                      type="number"
-              />
-              <select
-                  v-else
-                  class="w-full p-2 border rounded"
-                  v-model="editRow[col.key]"
               >
-                <option v-for="(option, idx) in col.options" :key="idx" :value="option">
-                  {{ option }}
-                </option>
-              </select>
+              <SearchableSelect v-else-if="col.type == 'select'" v-model="editRow[col.key]" :options="col.options ?? []" />
             </div>
           </td>
-          <td class="px-4 py-2 border" v-if="isEditor">
-            <button
-                v-if="!isEditingRow(row.id)"
-                @click="startEditing(row)"
+          <td v-if="isEditor" class="px-4 py-2 border">
+            <div v-if="!isEditingRow(row.id)" class="flex flex-row w-[150px] justify-between">
+              <button
+                  type="button"
+                  class="px-2 py-1 bg-blue-500 text-white rounded mr-2"
+                  @click="startEditing(row, rowIndex)"
+              >
+                편집
+              </button>
+              <button
+                  type="button"
+                  class="px-2 py-1 bg-green-500 text-white rounded mr-2"
+                  @click="saveEditing(rowIndex)"
+              >
+                저장
+              </button>
+              <button
+                  type="button"
+                  class="px-2 py-1 bg-red-500 text-white rounded"
+                  @click="removeRow(rowIndex)"
+              >
+                삭제
+              </button>
+            </div>
+            <div v-else class="flex flex-row w-[150px] justify-between">
+              <button
+                  type="button"
+                  class="px-2 py-1 bg-green-500 text-white rounded mr-2"
+                  @click="saveEditing(rowIndex)"
+              >
+                저장
+              </button>
+              <button
                 type="button"
-                class="px-2 py-1 bg-blue-500 text-white rounded mr-2"
-            >
-              편집
-            </button>
-            <button
-                v-else
-                @click="saveEditing(rowIndex)"
-                type="button"
-                class="px-2 py-1 bg-green-500 text-white rounded mr-2"
-            >
-              저장
-            </button>
-            <button
-                @click="removeRow(rowIndex)"
-                type="button"
-                class="px-2 py-1 bg-red-500 text-white rounded"
-            >
-              삭제
-            </button>
+                class="px-2 py-1 bg-yellow-400 text-white rounded mr-2"
+                @click="cancelEditing()"
+                >
+                취소
+              </button>
+              <button
+                  type="button"
+                  class="px-2 py-1 bg-red-500 text-white rounded"
+                  @click="removeRow(rowIndex)"
+              >
+                삭제
+              </button>
+            </div>
           </td>
         </tr>
       </Draggable>
     </table>
-    <button v-if="isEditor"
-        @click="addRow"
+    <button
+v-if="isEditor"
         type="button"
         class="mt-4 px-4 py-2 bg-green-500 text-white rounded"
+        @click="addRow"
     >
       행 추가
     </button>
+
+    <ModalElement ref="reOrderModal">
+      <h2 class="text-lg font-bold mb-4">순서 변경</h2>
+      <p class="mb-4">{{ (editingRowIdx ?? 0) + 1 }}번째 요소를 어디로 옮기시겠습니까?</p>
+
+      <input v-model="reOrderIndex" type="number" class="w-full p-2 border rounded mb-4" >
+    </ModalElement>
   </div>
 </template>
 

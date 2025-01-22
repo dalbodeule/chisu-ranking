@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ToastViewer from "~/components/ToastViewer.vue";
-import type {Section} from "~/components/Section.vue";
+import type {Section} from "~/components/SectionElement.vue";
 
 const props = defineProps<{
   section: Section
@@ -35,8 +35,8 @@ watch(() => section.value.content,
 <template>
   <div>
     <ClientOnly>
-      <ToastEditor :modelValue="section.content!!" :id="id" @update:modelValue="updateValue" v-if="isEditor" />
-      <ToastViewer :modelValue="section.content!!" :id="id" v-else />
+      <ToastEditor v-if="isEditor" :id="id" :model-value="section.content!!" @update:model-value="updateValue" />
+      <ToastViewer v-else :id="id" :model-value="section.content!!" />
     </ClientOnly>
   </div>
 </template>

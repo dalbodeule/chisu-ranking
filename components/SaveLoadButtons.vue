@@ -21,8 +21,8 @@ const load = () => {
 
 <template>
   <div class="flex space-x-2 mt-6">
-    <button @click="save" type="button" class="px-4 py-2 bg-blue-500 text-white rounded">저장</button>
-    <button @click="load" type="button" class="px-4 py-2 bg-green-500 text-white rounded">불러오기</button>
+    <button type="button" class="px-4 py-2 bg-blue-500 text-white rounded" @click="save">저장</button>
+    <button type="button" class="px-4 py-2 bg-green-500 text-white rounded" @click="load">불러오기</button>
   </div>
 </template>
 

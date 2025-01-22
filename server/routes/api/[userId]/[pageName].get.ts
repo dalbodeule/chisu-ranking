@@ -50,7 +50,7 @@ export default defineEventHandler(async(event) => {
         created_at: page.created_at,
         updated_at: page.updated_at,
         author: {
-            ...page.author!!
+            ...page.author!
         }
     }
 

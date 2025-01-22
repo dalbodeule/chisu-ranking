@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type {Section} from "~/components/Section.vue";
+import type {Section} from "~/components/SectionElement.vue";
 import type {Column, Row} from "~/components/TableEditor.vue";
 import type {Field} from "~/components/FormEditor.vue";
 
@@ -58,11 +58,12 @@ const updateFormFields = (fields: Field[]) => {
   <div>
     <TableEditor
       :columns="section.table!!.columns"
-      :modelValue="section.table!!.rows"
-      :isEditor="isEditor"
-      @update:modelValue="updateTableRows"
+      :model-value="section.table!!.rows"
+      :is-editor="isEditor"
+      @update:model-value="updateTableRows"
     />
-    <FormEditor v-if="isEditor"
+    <FormEditor
+v-if="isEditor"
       :columns="section.table!!.columns"
       :fields="section.form!!"
       @update:fields="updateFormFields"

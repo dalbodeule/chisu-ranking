@@ -17,7 +17,7 @@ export interface Section {
   form?: Field[]
 }
 
-const props = defineProps<{
+const _props = defineProps<{
   section: Section,
   isEditor: boolean,
 }>()
@@ -51,17 +51,18 @@ const removeSection = () => {
   <div class="p-4 border rounded">
     <component
       :is="getSectionComponent(section.type)"
+      :id="`${section.id}`"
       :section="section"
-      :modelValue="section.content"
+      :model-value="section.content"
       :table="section.table"
       :form="section.form"
-      :id="`${section.id}`"
-      :isEditor="isEditor"
+      :is-editor="isEditor"
       @update="updateSection"
       @remove="removeSection"
     />
-    <button @click="$emit('remove')" type="button" v-if="isEditor"
-        class="mt-2 px-3 py-1 bg-red-500 text-white rounded"
+    <button
+v-if="isEditor" type="button" class="mt-2 px-3 py-1 bg-red-500 text-white rounded"
+        @click="$emit('remove')"
     >섹션 삭제</button>
   </div>
 </template>

@@ -1,4 +1,4 @@
-import type { Section } from "@/components/Section.vue"
+import type { Section } from "~/components/SectionElement.vue"
 
 export const useDocumentStore = defineStore('document', {
     state: () => ({

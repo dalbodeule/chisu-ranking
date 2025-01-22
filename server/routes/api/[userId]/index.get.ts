@@ -1,6 +1,6 @@
 import schema from "~/server/database/schema";
 import {eq} from "drizzle-orm";
-import {GetUser} from "~/server/routes/api/[userId]/[pageName].get";
+import type {GetUser} from "~/server/routes/api/[userId]/[pageName].get";
 
 export interface GetPageList {
     content: {
@@ -44,7 +44,7 @@ export default defineEventHandler(async(event) => {
             updated_at: content.updated_at
         })),
         author: {
-            ...user!!
+            ...user!
         }
     }
 

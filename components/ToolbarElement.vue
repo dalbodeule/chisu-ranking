@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useDocumentStore} from "@/stores/documentStore"
-import type {Section} from "~/components/Section.vue";
+import type {Section} from "~/components/SectionElement.vue";
 
 const store = useDocumentStore()
 
@@ -31,7 +31,7 @@ const addTableSection = () => {
 
 <template>
   <div class="flex space-x-2">
-    <button @click="addTextSection" type="button" class="px-4 py-2 bg-gray-200 rounded">텍스트 추가</button>
-    <button @click="addTableSection" type="button" class="px-4 py-2 bg-gray-200 rounded">테이블 추가</button>
+    <button type="button" class="px-4 py-2 bg-gray-200 rounded" @click="addTextSection">텍스트 추가</button>
+    <button type="button" class="px-4 py-2 bg-gray-200 rounded" @click="addTableSection">테이블 추가</button>
   </div>
 </template>

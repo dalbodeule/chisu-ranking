@@ -30,7 +30,7 @@ onMounted(() => {
       change: () => emit('update:modelValue', e.getMarkdown()),
     },
     hooks: {
-      addImageBlobHook: async (blob: Blob, callback: (url: string, text: string) => void) => {
+      addImageBlobHook: async (_blob: Blob, _callback: (url: string, text: string) => void) => {
         console.log()
         alert("아직 이미지 업로드는 제공되지 않습니다.")
         return false;

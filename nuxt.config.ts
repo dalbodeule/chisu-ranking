@@ -39,5 +39,10 @@ export default defineNuxtConfig({
     "nuxt-csurf",
     "nuxt-auth-utils",
     "@vesp/nuxt-fontawesome"
-  ]
+  ],
+  fontawesome: {
+    icons: {
+      solid: ['table', 'ranking-star', 'angle-down', 'check' ]
+    }
+  }
 })
