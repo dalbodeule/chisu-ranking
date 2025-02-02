@@ -156,7 +156,7 @@ watch(
             </select>
             <button type="button" class="mb-4 px-4 py-2 bg-red-500 text-white rounded" @click="removeOptions(index)">옵션 삭제</button>
             <form class="flex flex-row gap-[20px]" @submit.prevent="addOptions(index, requireAdd[index])">
-              <input v-model="requireAdd" type="text" class="border rounded" placeholder="옵션을 입력하세요." >
+              <input v-model="requireAdd[index]" type="text" class="border rounded" placeholder="옵션을 입력하세요." >
               <button type="submit" class="mb-4 px-4 py-2 bg-green-500 text-white rounded">추가</button>
             </form>
           </div>

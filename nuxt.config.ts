@@ -38,7 +38,8 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "nuxt-csurf",
     "nuxt-auth-utils",
-    "@vesp/nuxt-fontawesome"
+    "@vesp/nuxt-fontawesome",
+    "@nuxt/image"
   ],
   fontawesome: {
     icons: {
