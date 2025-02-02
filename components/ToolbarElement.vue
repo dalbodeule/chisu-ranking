@@ -30,7 +30,7 @@ const addTableSection = () => {
 </script>
 
 <template>
-  <div class="flex space-x-2">
+  <div class="flex space-x-2 mt-[20px]">
     <button type="button" class="px-4 py-2 bg-gray-200 rounded" @click="addTextSection">텍스트 추가</button>
     <button type="button" class="px-4 py-2 bg-gray-200 rounded" @click="addTableSection">테이블 추가</button>
   </div>

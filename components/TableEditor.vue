@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, ref, watch } from 'vue'
-import { VueDraggableNext as Draggable } from 'vue-draggable-next'
 import SearchableSelect from "~/components/SearchableSelect.vue";
 import ModalElement from "~/components/ModalElement.vue";
+import {VueDraggable} from "vue-draggable-plus";
 
-export type IFormTypes = 'text' | 'number' | 'select'
+export type IFormTypes = 'text' | 'number' | 'select' | 'formatText'
 
 export interface Row {
   id: number
@@ -17,7 +16,16 @@ export interface Column {
   name: string
   type: IFormTypes
   default?: string | number
-  options?: string[]
+  options?: string[],
+  format?: FormatText[],
+}
+
+export type IFormatTextType = 'index' | 'reverseIndex' | 'default'
+
+export interface FormatText {
+  type: IFormatTextType,
+  index: number,
+  format: string
 }
 
 const props = defineProps<{
@@ -104,6 +112,21 @@ const openReorderModal = async (rowIndex: number) => {
   }
 }
 
+const formatText = (text: string, format: FormatText[] | undefined, index: number) => {
+  if (!format) return text;
+
+  const forwardIndexFormat = format.find(f => f.type === 'index' && f.index === index);
+  if (forwardIndexFormat) return forwardIndexFormat.format.replace('{text}', text);
+
+  const reverseIndexFormat = format.find(f => f.type === 'reverseIndex' && f.index === rows.value.length - index + 1);
+  if (reverseIndexFormat) return reverseIndexFormat.format.replace('{text}', text);
+
+  const defaultFormat = format.find(f => f.type === 'default');
+  if (defaultFormat) return defaultFormat.format.replace('{text}', text);
+
+  return text;
+}
+
 // Watch for changes in rows and emit updates
 watch(rows, (newRows: Row[]) => {
   emit('update:modelValue', newRows)
@@ -111,8 +134,8 @@ watch(rows, (newRows: Row[]) => {
 </script>
 
 <template>
-  <div>
-    <table class="min-w-full border">
+  <div class="max-md:w-[1200px]">
+    <table class="table table-fixed w-full">
       <thead>
       <tr>
         <th class="px-2 py-2 border">순위</th>
@@ -120,11 +143,11 @@ watch(rows, (newRows: Row[]) => {
         <th v-if="isEditor" class="px-4 py-2 border">작업</th>
       </tr>
       </thead>
-      <Draggable v-model="rows" tag="tbody" :move="() => isEditor && editingRowId == null" @end="onDragEnd">
+      <VueDraggable v-model="rows" tag="tbody" :disabled="!isEditor || editingRowId != null" @onEnd="onDragEnd">
         <tr v-for="(row, rowIndex) in rows" :key="row.id" class="border text-center">
           <td class="px-2 py-2 border">
             {{ rowIndex + 1 }}
-            
+
             <button
                 v-if="isEditingRow(row.id)"
                 type="button"
@@ -135,21 +158,29 @@ watch(rows, (newRows: Row[]) => {
             </button>
           </td>
           <td v-for="col in columns" :key="col.id" class="px-4 py-2 border">
-            <span v-if="!isEditingRow(row.id)">
-              {{ row[col.key] }}
-            </span>
+            <div v-if="!isEditingRow(row.id)">
+              <span v-if="col.type == 'formatText'">
+                {{ formatText(`${row[col.key]}`, col.format, rowIndex + 1) }}
+              </span>
+              <span v-else>
+                {{ row[col.key] }}
+              </span>
+            </div>
             <div v-else>
               <!-- `select` 타입과 다른 타입을 구분 -->
-              <input
-v-if="col.type == 'text'"
+              <input v-if="col.type == 'text'"
                   v-model="editRow[col.key]"
                   class="w-full p-2 border rounded"
               >
-              <input
-v-else-if="col.type == 'number'"
+              <input v-else-if="col.type == 'number'"
                      v-model="editRow[col.key]"
                      class="w-full p-2 border rounded"
                      type="number"
+              >
+              <input v-else-if="col.type == 'formatText'"
+                     v-model="editRow[col.key]"
+                     class="w-full p-2 border rounded"
+                     type="text"
               >
               <SearchableSelect v-else-if="col.type == 'select'" v-model="editRow[col.key]" :options="col.options ?? []" />
             </div>
@@ -203,7 +234,7 @@ v-else-if="col.type == 'number'"
             </div>
           </td>
         </tr>
-      </Draggable>
+      </VueDraggable>
     </table>
     <button
 v-if="isEditor"

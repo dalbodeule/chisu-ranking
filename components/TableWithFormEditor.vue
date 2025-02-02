@@ -36,7 +36,8 @@ const updateFormFields = (fields: Field[]) => {
         name: value.label,
         type: value.type,
         default: value.value,
-        options: value.options
+        options: value.options,
+        format: value.format
       }
     })
 

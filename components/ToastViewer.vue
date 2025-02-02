@@ -33,3 +33,9 @@ onMounted(() => {
 <template>
   <div ref="viewer" />
 </template>
+
+<style>
+  .toastui-editor-content p {
+    font-size: 14px;
+  }
+</style>

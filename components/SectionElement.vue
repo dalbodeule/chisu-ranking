@@ -17,7 +17,7 @@ export interface Section {
   form?: Field[]
 }
 
-const _props = defineProps<{
+const props = defineProps<{
   section: Section,
   isEditor: boolean,
 }>()
@@ -48,7 +48,7 @@ const removeSection = () => {
 </script>
 
 <template>
-  <div class="p-4 border rounded">
+  <div class="p-4 border rounded overflow-y-scroll">
     <component
       :is="getSectionComponent(section.type)"
       :id="`${section.id}`"

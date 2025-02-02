@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type {Column, IFormTypes} from "~/components/TableEditor.vue";
-import { VueDraggableNext as Draggable } from 'vue-draggable-next'
+import type {Column, FormatText, IFormTypes, IFormatTextType} from "~/components/TableEditor.vue";
+import {VueDraggable} from 'vue-draggable-plus'
 
 export interface Field {
   id: number,
@@ -8,7 +8,8 @@ export interface Field {
   label: string,
   type: IFormTypes,
   value?: string | number,
-  options?: string[]
+  options?: string[],
+  format?: FormatText[],
 }
 
 const props = defineProps<{
@@ -22,7 +23,9 @@ const emit = defineEmits<{
 
 const fields: Ref<Field[]> = ref([...props.fields])
 const selectedField: Ref<string> = ref("")
-const requireAdd: Ref<string> = ref("")
+const requireAdd: Ref<string[]> = ref([])
+const selectType: Ref<string> = ref("")
+const indexs: Ref<number> = ref(1)
 const isUpdating: Ref<boolean> = ref(false)
 
 const addField = () => {
@@ -71,6 +74,8 @@ const getComponent = (type: IFormTypes) => {
       return 'input'
     case 'select':
       return 'select'
+    case 'formatText':
+      return 'select'
     default:
       return 'input'
   }
@@ -79,6 +84,34 @@ const getComponent = (type: IFormTypes) => {
 const updateFields = () => {
   if(isUpdating.value) return
   emit('update:fields', fields.value)
+}
+
+const addFormats = (index: number, content: string, indexs: number, type: IFormatTextType) => {
+  if (fields.value[index].format) {
+    fields.value[index].format?.push({
+      format: content,
+      index: indexs,
+      type: type
+    })
+  } else {
+    fields.value[index].format = [{
+      format: content,
+      index: indexs,
+      type: type
+    }]
+  }
+  emit('update:fields', fields.value)
+}
+
+const removeFormats = (index: number) => {
+  if (fields.value[index].format != null) {
+    const field = fields.value[index].format?.find(format => format.format == requireAdd.value[index])
+    if (!field) return
+    const propIdx = fields.value[index].format!.indexOf(field)
+    fields.value.splice(propIdx, 1)
+
+    emit('update:fields', fields.value)
+  }
 }
 
 const onDragEnd = (_e: DragEvent) => {
@@ -99,37 +132,55 @@ watch(
 
 <template>
   <div class="mt-4">
-    <Draggable @end="onDragEnd">
+    <VueDraggable v-model="fields" :delay="1000" @onEnd="onDragEnd">
       <div v-for="(field, index) in fields" :key="field.id" class="mb-4 p-4 border rounded">
         <div class="flex items-center space-x-2">
           <select v-model="field.type" class="p-2 border rounded">
             <option value="text">텍스트</option>
             <option value="number">숫자</option>
             <option value="select">선택</option>
+            <option value="formatText">양식이 있는 텍스트</option>
           </select>
           <input v-model="field.label" placeholder="필드 라벨" class="flex-1 p-2 border rounded" @input="updateFields">
           <button type="button" class="px-2 py-1 bg-red-500 text-white rounded" @click="removeField(index)">삭제</button>
         </div>
         <div class="mt-2">
-          <component
-:is="getComponent(field.type)" v-if="field.type !== 'select'" v-model="field.value"
+          <component :is="getComponent(field.type)" v-if="getComponent(field.type) !== 'select'" v-model="field.value"
             class="w-full p-2 border rounded" placeholder="기본값을 입력하세요."
           />
-          <div v-else class="flex flex-row gap-[20px] w-full">
+          <div v-else-if="field.type == 'select'" class="flex flex-row gap-[20px] w-full">
             <select v-model="selectedField" class="p-2 px-4 py-2 border rounded w-[1/3]" @change="updateFields">
               <option v-for="option in field.options" :key="option" :value="option">
                 {{ option }}
               </option>
             </select>
             <button type="button" class="mb-4 px-4 py-2 bg-red-500 text-white rounded" @click="removeOptions(index)">옵션 삭제</button>
-            <form class="flex flex-row gap-[20px]" @submit.prevent="addOptions(index, requireAdd)">
+            <form class="flex flex-row gap-[20px]" @submit.prevent="addOptions(index, requireAdd[index])">
               <input v-model="requireAdd" type="text" class="border rounded" placeholder="옵션을 입력하세요." >
+              <button type="submit" class="mb-4 px-4 py-2 bg-green-500 text-white rounded">추가</button>
+            </form>
+          </div>
+          <div v-else-if="field.type == 'formatText'" class="flex flex-row gap-[20px] w-full">
+            <select v-model="selectedField" class="p-2 px-4 py-2 border rounded w-[1/3]" @change="updateFields">
+              <option v-for="(option, index) in field.format" :key="index" :value="index">
+                {{ index + 1 }} - {{ option.format }}
+              </option>
+            </select>
+            <button type="button" class="mb-4 px-4 py-2 bg-red-500 text-white rounded" @click="removeFormats(index)">옵션 삭제</button>
+            <form class="flex flex-row gap-[20px]" @submit.prevent="addFormats(index, requireAdd[index], indexs, selectType as IFormatTextType)">
+              <input v-model="requireAdd[index]" type="text" class="border rounded" placeholder="포멧을 입력하세요." >
+              <input v-model="indexs" type="number" min='1' class="border rounded" placeholder="순위를 입력하세요." >
+              <select v-model="selectType" class="p-2 px-4 py-2 border rounded w-[1/3]">
+                <option value="index">앞에서 {{ indexs }}등</option>
+                <option value="reverseIndex">뒤에서 {{ indexs }}등</option>
+                <option value="default">기본</option>
+              </select>
               <button type="submit" class="mb-4 px-4 py-2 bg-green-500 text-white rounded">추가</button>
             </form>
           </div>
         </div>
       </div>
-    </Draggable>
+    </VueDraggable>
     <div class="flex items-center space-x-2">
       <button type="button" class="mb-4 px-4 py-2 bg-blue-500 text-white rounded" @click="addField">필드 추가</button>
     </div>
