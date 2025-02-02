@@ -31,11 +31,5 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="viewer" />
+  <div ref="viewer" class="editor ranking"/>
 </template>
-
-<style>
-  .toastui-editor-content p {
-    font-size: 14px;
-  }
-</style>

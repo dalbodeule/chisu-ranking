@@ -44,7 +44,11 @@ export default defineEventHandler(async(event) => {
     if(page) {
         const query = await db.update(schema.Pages).set({
             content,
-        }).execute()
+            updated_at: new Date()
+        }).where(and(
+            eq(schema.Pages.userId, session.user.channelId),
+            eq(schema.Pages.pagename, decodedPageName)
+        )).execute()
 
         if(!query) throw createError({
             statusCode: 500,

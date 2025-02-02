@@ -44,5 +44,37 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="editor" />
+  <div ref="editor" class="editor ranking"/>
 </template>
+
+<style lang="scss">
+  .editor.ranking {
+    p, span, strike, strong, em, u, del, a, ul, ol, li, blockquote {
+        font-size: 16px;
+    }
+
+    h1 > span {
+      font-size: 24px;
+    }
+
+    h2 > span {
+      font-size: 22px;
+    }
+
+    h3 > span {
+      font-size: 20px;
+    }
+
+    h4 > span {
+      font-size: 18px;
+    }
+
+    h5 > span {
+      font-size: 16px;
+    }
+
+    h6 > span {
+      font-size: 14px;
+    }
+  }
+</style>
