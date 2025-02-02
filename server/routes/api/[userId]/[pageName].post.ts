@@ -17,7 +17,7 @@ export default defineEventHandler(async(event) => {
     const { userId, pageName } = event.context.params as { userId: string | undefined, pageName: string | undefined }
     const { content } = await readBody(event) as { content: string | undefined }
 
-    if(!userId || !pageName || !content) throw createError({
+    if(!userId || !pageName) throw createError({
         statusCode: 404,
         message: 'Invalid user id or page name'
     })

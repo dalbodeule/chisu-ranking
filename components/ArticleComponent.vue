@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {useDocumentStore} from "~/stores/documentStore";
 import type {Section} from "~/components/SectionElement.vue";
-import type {GetPage} from "~/server/routes/api/[props.userId]/[props.pageName].get";
 import ModalElement from "~/components/ModalElement.vue";
 import LoadingSpinner from "~/components/LoadingSpinner.vue";
 import {computedAsync} from "@vueuse/core";
 import type {IChzzkChannel} from "~/server/utils/chzzkApi";
+import type {GetPage} from "~/server/routes/api/[userId]/[pageName].get";
 const { $csrfFetch } = useNuxtApp()
 
 const { loggedIn, user } = useUserSession()
@@ -47,7 +47,7 @@ const loadPage = async (isFirstLoad: boolean = false) => {
       store.loadDocument(data.content)
 
       useSeoMeta({
-        title: `${data.author.name} - ${data.props.pageName} :: 치수랭킹`,
+        title: `${data.author.name} - ${props.pageName} :: 치수랭킹`,
         description: data.content.substring(0, 150),
         ogType: 'website',
         ogUrl: `https://ranking.mori.space/${props.userId}/${props.pageName}`

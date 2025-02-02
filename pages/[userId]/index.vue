@@ -4,14 +4,20 @@ import type {GetPageList} from "~/server/routes/api/[userId]/index.get";
 import {computedAsync} from "@vueuse/core";
 import type {IChzzkChannel} from "~/server/utils/chzzkApi";
 import dayjs from "dayjs";
+import type {GetPage} from "~/server/routes/api/[userId]/[pageName].get";
+import ModalElement from "~/components/ModalElement.vue";
+import LoadingSpinner from "~/components/LoadingSpinner.vue";
 
 const { $csrfFetch } = useNuxtApp()
 
 const route = useRoute()
 
-const userId = route.params.userId
+const userId = route.params.userId as string
 
 const userPages: Ref<GetPageList | undefined> = ref(undefined)
+const newPageName: Ref<string> = ref('')
+
+const loading: Ref<boolean> = ref(false)
 
 const loadPage = async () => {
   try {
@@ -51,6 +57,36 @@ const chzzkProfile = computedAsync(async () => {
   else return null
 })
 
+const submitModal: Ref<InstanceType<typeof ModalElement> | null> = ref(null)
+const submitPage = async() => {
+  try {
+    const submit = await submitModal.value?.open()
+    if(!submit) return
+
+    loading.value = true
+
+    const result = await $csrfFetch(`/api/${userId}/${encodeURIComponent(newPageName.value)}`, {
+      method: 'POST',
+      body: JSON.stringify({ content: "" }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }) as GetPage | undefined
+
+    if (result) {
+      console.log("complete")
+    } else {
+      throw Error('Failed to save document')
+    }
+  } catch(e) {
+    console.error(e)
+  } finally {
+    await loadPage()
+
+    loading.value = false
+  }
+}
+
 onMounted(async () => await loadPage())
 
 </script>
@@ -88,6 +124,30 @@ onMounted(async () => await loadPage())
       </div>
       <p v-if="!userPages?.content.length" class="text-gray-500 mt-2">No pages created yet.</p>
     </div>
+
+    <div class="create-page mt-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-2">새 페이지 만들기</h2>
+      <form @submit.prevent="submitPage" class="flex items-center space-x-4">
+        <input
+            v-model="newPageName"
+            type="text"
+            placeholder="새 페이지 이름 입력"
+            class="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-grow"
+            required
+        />
+        <button
+            type="submit"
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+        >
+          페이지 생성
+        </button>
+      </form>
+    </div>
+
+    <ModalElement ref="submitModal" title="새 페이지 확인">
+      <p class="mb-4">새로운 페이지를 만드시겠습니까?</p>
+    </ModalElement>
+    <LoadingSpinner :loading="loading" />
   </div>
 </template>
 
