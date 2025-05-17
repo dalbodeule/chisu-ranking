@@ -31,11 +31,13 @@ const loadModal: Ref<InstanceType<typeof ModalElement> | null> = ref(null);
 const loadPage = async () => {
   try {
     loading.value = true;
-    const { data } = await useAsyncData<GetPage | undefined>(
-      async () => await $fetch(`/api/${props.userId}/${props.pageName}`),
-    );
-
-    if (data?.value) {
+    await nextTick();
+    const { data } = await useFetch<GetPage>(`/api/${props.userId}/${props.pageName}`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    if (data.value?.content) {
+      console.log(data.value.content);
       store.loadDocument(data.value.content);
 
       useSeoMeta({

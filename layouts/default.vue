@@ -7,9 +7,11 @@ const { user, loggedIn } = useUserSession();
 provide("USER", logged);
 
 onMounted(async () => {
+  await nextTick();
   if (loggedIn && user.value?.channelId) {
     const { data } = await useFetch<IChzzkChannelUser>("/api/chzzk/user", {
       method: "POST",
+      credentials: 'include',
       body: JSON.stringify({
         userId: user.value.channelId,
       }),

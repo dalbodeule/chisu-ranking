@@ -24,7 +24,7 @@ export const getChzzkUserInfo = async (
   clientId: string,
   clientSecret: string,
 ): Promise<IChzzkData<IChzzkChannel>> => {
-  return (await $fetch(`${url}/open/v1/channels?channelIds=${userId}`, {
+  const response = await fetch(`${url}/open/v1/channels?channelIds=${userId}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -33,5 +33,7 @@ export const getChzzkUserInfo = async (
       "Client-Id": clientId,
       "Client-Secret": clientSecret,
     },
-  })) as IChzzkData<IChzzkChannel>;
+  });
+
+  return await response.json() as IChzzkData<IChzzkChannel>
 };
