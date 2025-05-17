@@ -5,7 +5,9 @@
   >
     <div class="flex flex-col items-center">
       <!-- TailwindCSS를 활용한 로딩 스피너 -->
-      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"/>
+      <div
+        class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"
+      />
       <p class="mt-4 text-white text-lg font-semibold">로딩 중...</p>
     </div>
   </div>

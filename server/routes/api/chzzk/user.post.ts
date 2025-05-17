@@ -1,19 +1,28 @@
-import { getChzzkUserInfo } from "@/server/utils/chzzkApi"
+import { getChzzkUserInfo } from "@/server/utils/chzzkApi";
 
-export default defineEventHandler(async(event) => {
-    const { userId } = await readBody(event) as { userId: string | undefined }
+export default defineEventHandler(async (event) => {
+  const { userId } = (await readBody(event)) as { userId: string | undefined };
+  const config = useRuntimeConfig(event);
 
-    if(!userId) throw createError({
-        status: 404,
-        message: 'UserId not found'
-    })
+  if (!userId)
+    throw createError({
+      status: 404,
+      message: "UserId not found",
+    });
 
-    const profile = await getChzzkUserInfo(userId)
+  const profile = await getChzzkUserInfo(
+    userId,
+    config.chzzk.clientId,
+    config.chzzk.clientSecret,
+  );
 
-    if(!profile || !profile.content) throw createError({
-        status: 404,
-        message: 'User not found'
-    })
+  console.log(profile.content?.data);
 
-    return profile.content
-})
+  if (!profile || !profile.content?.data)
+    throw createError({
+      status: 404,
+      message: "User not found",
+    });
+
+  return profile.content?.data?.at(0);
+});

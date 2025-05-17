@@ -1,9 +1,9 @@
-import {drizzle} from "drizzle-orm/d1/driver";
+import { drizzle } from "drizzle-orm/d1/driver";
 
-import schema from '~/server/database/schema'
+import schema from "~/server/database/schema";
 
 export function useDrizzle() {
-    return drizzle(hubDatabase(), {
-        schema,
-    })
+  return drizzle(hubDatabase(), {
+    schema,
+  });
 }

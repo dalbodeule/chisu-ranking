@@ -1,16 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+// eslint-disable-next-line
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  compatibilityDate: "2024-11-27",
+  compatibilityDate: "2025-05-17",
   srcDir: ".",
   dir: {
-    app: "app"
+    app: "app",
   },
-  css: [
-    "@/assets/tailwind.scss",
-  ],
+  css: ["@/assets/tailwind.scss"],
   build: {
-    transpile: ["@pinia/nuxt", "Dayjs"]
+    transpile: ["@pinia/nuxt", "Dayjs"],
   },
   hub: {
     database: true,
@@ -21,14 +20,14 @@ export default defineNuxtConfig({
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,
       redirectUri: process.env.REDIRECT_URI,
-      apiCallUri: process.env.API_CALLURI
-    }
+      apiCallUri: process.env.API_CALLURI,
+    },
   },
   nitro: {
-    experimental: {
-      tasks: true
+    preset: "cloudflare_module",
+    prerender: {
+      autoSubfolderIndex: false,
     },
-    preset: "cloudflare-module"
   },
   modules: [
     "@nuxtjs/turnstile",
@@ -36,14 +35,13 @@ export default defineNuxtConfig({
     "@nuxt/eslint",
     "@nuxtjs/tailwindcss",
     "@pinia/nuxt",
-    "nuxt-csurf",
     "nuxt-auth-utils",
     "@vesp/nuxt-fontawesome",
-    "@nuxt/image"
+    "@nuxt/image",
   ],
   fontawesome: {
     icons: {
-      solid: ['table', 'ranking-star', 'angle-down', 'check' ]
-    }
-  }
-})
+      solid: ["table", "ranking-star", "angle-down", "check"],
+    },
+  },
+});

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-const { clear } = useUserSession()
-const router = useRouter()
+const { clear } = useUserSession();
+const router = useRouter();
 
-;(async() => {
-  await clear()
+(async () => {
+  await clear();
 
-  await router.push('/')
-})()
+  await router.push("/");
+})();
 </script>
