@@ -2,6 +2,7 @@
 import SearchableSelect from "~/components/SearchableSelect.vue";
 import ModalElement from "~/components/ModalElement.vue";
 import { VueDraggable } from "vue-draggable-plus";
+import {range} from "assets/tools";
 
 export type IFormTypes = "text" | "number" | "select" | "formatText";
 
@@ -100,6 +101,90 @@ const onDragEnd = () => {
   emit("update:modelValue", rows.value);
 };
 
+const gridDimensions = computed(() => {
+  let maxRow = 1;
+  let maxCol = 1;
+
+  props.columns.forEach((col) => {
+    const endRow = (col.gridRow ?? 1) + (col.gridRowSpan ?? 1) - 1;
+    const endCol = (col.gridColumn ?? 1) + (col.gridColumnSpan ?? 1) - 1;
+    maxRow = Math.max(maxRow, endRow);
+    maxCol = Math.max(maxCol, endCol);
+  });
+
+  return {maxRow, maxCol};
+});
+
+// A helper function to determine if a grid cell at (r, c) is already "covered" by a spanning cell
+const isCellCovered = (
+    targetRow: number,
+    targetCol: number,
+    renderedCells: Set<string>
+): boolean => {
+  return renderedCells.has(`${targetRow}-${targetCol}`);
+};
+
+const getColumnsForGridRow = (
+    gridRow: number,
+    isHeader: boolean = false
+): Column[] => {
+  const columnsInThisRow: Column[] = [];
+  const renderedCells = new Set<string>(); // Keep track of cells already "rendered" by a spanning column
+
+  for (let c = 1; c <= gridDimensions.value.maxCol; c++) {
+    if (isCellCovered(gridRow, c, renderedCells)) {
+      continue; // Skip if this cell is already covered by a previous spanning column
+    }
+
+    const column = props.columns.find((col) => {
+      const colGridRow = col.gridRow ?? 1;
+      const colGridCol = col.gridColumn ?? 1;
+      const colRowSpan = col.gridRowSpan ?? 1;
+      const colColSpan = col.gridColumnSpan ?? 1;
+
+      // Check if the current grid cell (gridRow, c) is the starting point of this column
+      return (
+          colGridRow === gridRow &&
+          colGridCol === c
+      );
+    });
+
+    if (column) {
+      columnsInThisRow.push(column);
+      // Mark all cells covered by this column's span
+      for (let r = gridRow; r < gridRow + (column.gridRowSpan ?? 1); r++) {
+        for (let kc = c; kc < c + (column.gridColumnSpan ?? 1); kc++) {
+          renderedCells.add(`${r}-${kc}`);
+        }
+      }
+    } else if (isHeader) {
+      // If it's a header and no column explicitly starts here,
+      // it might be a gap, but we need to ensure the structure
+      // for the loop to continue correctly, hence `renderedCells.add`.
+      // For headers, empty cells are not explicitly rendered unless it's a gap.
+      // We only add to renderedCells if a column is found to prevent
+      // double counting for the next iteration.
+    }
+  }
+  return columnsInThisRow;
+};
+
+const getDataByPosition = (dataRow: Row, row: number, col: number): string | number => {
+  const column = props.columns.find((column) => {
+    const columnRow = column.gridRow ?? 1;
+    const columnCol = column.gridColumn ?? 1;
+    const rowSpan = column.gridRowSpan ?? 1;
+    const colSpan = column.gridColumnSpan ?? 1;
+
+    return row >= columnRow &&
+        row < columnRow + rowSpan &&
+        col >= columnCol &&
+        col < columnCol + colSpan;
+  });
+  return column ? dataRow[column.key] : '';
+};
+
+
 const reOrderModal: Ref<InstanceType<typeof ModalElement> | null> = ref(null);
 const reOrderIndex: Ref<number | null> = ref(null);
 const openReorderModal = async (rowIndex: number) => {
@@ -127,7 +212,7 @@ const formatText = (text: string, format: FormatText[] | undefined, index: numbe
   if (forwardIndexFormat) return forwardIndexFormat.format.replace("{text}", text);
 
   const reverseIndexFormat = format.find(
-    (f) => f.type === "reverseIndex" && f.index === rows.value.length - index + 1,
+      (f) => f.type === "reverseIndex" && f.index === rows.value.length - index + 1,
   );
   if (reverseIndexFormat) return reverseIndexFormat.format.replace("{text}", text);
 
@@ -137,13 +222,12 @@ const formatText = (text: string, format: FormatText[] | undefined, index: numbe
   return text;
 };
 
-// Watch for changes in rows and emit updates
 watch(
-  rows,
-  (newRows: Row[]) => {
-    emit("update:modelValue", newRows);
-  },
-  { deep: true },
+    rows,
+    (newRows: Row[]) => {
+      emit("update:modelValue", newRows);
+    },
+    {deep: true},
 );
 </script>
 
@@ -151,127 +235,148 @@ watch(
   <div class="max-md:w-[1200px]">
     <table class="table table-fixed w-full">
       <thead>
-        <tr>
-          <th class="px-2 py-2 border">순위</th>
-          <th v-for="col in columns" :key="col.id" class="px-4 py-2 border">
-            {{ col.name }}
+      <tr v-for="gridRowIndex in range(gridDimensions.maxRow + 1, 1)" :key="`th-grid-row-${gridRowIndex}`">
+        <th class="px-2 py-2 border" v-if="gridRowIndex === 1" :rowspan="gridDimensions.maxRow">순위</th>
+
+        <template v-for="column in getColumnsForGridRow(gridRowIndex, true)" :key="`th-${column.id}`">
+          <th
+              class="px-4 py-2 border"
+              :rowspan="column.gridRowSpan ?? 1"
+              :colspan="column.gridColumnSpan ?? 1"
+          >
+            {{ column.name }}
           </th>
-          <th v-if="isEditor" class="px-4 py-2 border">작업</th>
-        </tr>
+        </template>
+
+        <th v-if="isEditor && gridRowIndex === 1" class="px-2 py-2 border" :rowspan="gridDimensions.maxRow">작업</th>
+      </tr>
       </thead>
       <VueDraggable
-        v-model="rows"
-        tag="tbody"
-        :disabled="!isEditor || editingRowId != null"
-        @on-end="onDragEnd"
+          v-model="rows"
+          tag="tbody"
+          :disabled="!isEditor || editingRowId != null"
+          @on-end="onDragEnd"
       >
-        <tr v-for="(row, rowIndex) in rows" :key="row.id" class="border text-center">
-          <td class="px-2 py-2 border">
-            {{ rowIndex + 1 }}
+        <template v-for="(row, rowIndex) in rows" :key="`data-${row.id}`">
+          <tr v-for="gridRowIndex in range(gridDimensions.maxRow + 1, 1)" :key="`data-${row.id}-grid-row-${gridRowIndex}`" class="px-2 py-2 border text-center">
+            <td class="px-2 py-2 border text-center" v-if="gridRowIndex === 1" :rowspan="gridDimensions.maxRow">
+              {{ rowIndex + 1 }}
 
-            <button
-              v-if="isEditingRow(row.id)"
-              type="button"
-              class="px-4 py-1 bg-blue-600 text-white rounded"
-              @click="openReorderModal(rowIndex)"
-            >
-              옮기기
-            </button>
-          </td>
-          <td v-for="col in columns" :key="col.id" class="px-4 py-2 border">
-            <div v-if="!isEditingRow(row.id)">
-              <span v-if="col.type == 'formatText'">
-                {{ formatText(`${row[col.key]}`, col.format, rowIndex + 1) }}
-              </span>
-              <span v-else>
-                {{ row[col.key] }}
-              </span>
-            </div>
-            <div v-else>
-              <!-- `select` 타입과 다른 타입을 구분 -->
-              <input
-                v-if="col.type == 'text'"
-                v-model="editRow[col.key]"
-                class="w-full p-2 border rounded"
-              />
-              <input
-                v-else-if="col.type == 'number'"
-                v-model="editRow[col.key]"
-                class="w-full p-2 border rounded"
-                type="number"
-              />
-              <input
-                v-else-if="col.type == 'formatText'"
-                v-model="editRow[col.key]"
-                class="w-full p-2 border rounded"
-                type="text"
-              />
-              <SearchableSelect
-                v-else-if="col.type == 'select'"
-                v-model="editRow[col.key]"
-                :options="col.options ?? []"
-              />
-            </div>
-          </td>
-          <td v-if="isEditor" class="px-4 py-2 border">
-            <div
-              v-if="!isEditingRow(row.id)"
-              class="flex flex-row w-[150px] justify-between"
-            >
               <button
-                type="button"
-                class="px-2 py-1 bg-blue-500 text-white rounded mr-2"
-                @click="startEditing(row, rowIndex)"
+                  v-if="isEditingRow(row.id)"
+                  type="button"
+                  class="px-4 py-1 bg-blue-600 text-white rounded"
+                  @click="openReorderModal(rowIndex)"
               >
-                편집
+                옮기기
               </button>
-              <button
-                type="button"
-                class="px-2 py-1 bg-green-500 text-white rounded mr-2"
-                @click="saveEditing(rowIndex)"
+            </td>
+
+            <template v-for="column in getColumnsForGridRow(gridRowIndex)" :key="`${row.id}-${column.id}`">
+              <td
+                  class="px-4 py-2 border"
+                  :rowspan="column.gridRowSpan ?? 1"
+                  :colspan="column.gridColumnSpan ?? 1"
               >
-                저장
-              </button>
-              <button
-                type="button"
-                class="px-2 py-1 bg-red-500 text-white rounded"
-                @click="removeRow(rowIndex)"
+                <div v-if="!isEditingRow(row.id)">
+                  <span v-if="column.type === 'formatText'">
+                    {{ formatText(
+                      `${row[column.key]}`, // Directly use row[column.key] as it's the data for this column
+                      column.format,
+                      rowIndex + 1
+                  ) }}
+                  </span>
+                  <span v-else>
+                    {{ row[column.key] }}
+                  </span>
+                </div>
+                <div v-else>
+                  <input
+                      v-if="column.type === 'text'"
+                      v-model="editRow[column.key]"
+                      class="w-full p-2 border rounded"
+                  />
+                  <input
+                      v-else-if="column.type === 'number'"
+                      v-model="editRow[column.key]"
+                      class="w-full p-2 border rounded"
+                      type="number"
+                  />
+                  <input
+                      v-else-if="column.type === 'formatText'"
+                      v-model="editRow[column.key]"
+                      class="w-full p-2 border rounded"
+                      type="text"
+                  />
+                  <SearchableSelect
+                      v-else-if="column.type === 'select'"
+                      v-model="editRow[column.key]"
+                      :options="column.options ?? []"
+                  />
+                </div>
+              </td>
+            </template>
+
+            <td v-if="isEditor && gridRowIndex === 1" class="px-4 py-2 border" :rowspan="gridDimensions.maxRow">
+              <div
+                  v-if="!isEditingRow(row.id)"
+                  class="flex flex-row w-[150px] justify-between"
               >
-                삭제
-              </button>
-            </div>
-            <div v-else class="flex flex-row w-[150px] justify-between">
-              <button
-                type="button"
-                class="px-2 py-1 bg-green-500 text-white rounded mr-2"
-                @click="saveEditing(rowIndex)"
-              >
-                저장
-              </button>
-              <button
-                type="button"
-                class="px-2 py-1 bg-yellow-400 text-white rounded mr-2"
-                @click="cancelEditing()"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                class="px-2 py-1 bg-red-500 text-white rounded"
-                @click="removeRow(rowIndex)"
-              >
-                삭제
-              </button>
-            </div>
-          </td>
-        </tr>
+                <button
+                    type="button"
+                    class="px-2 py-1 bg-blue-500 text-white rounded mr-2"
+                    @click="startEditing(row, rowIndex)"
+                >
+                  편집
+                </button>
+                <button
+                    type="button"
+                    class="px-2 py-1 bg-green-500 text-white rounded mr-2"
+                    @click="saveEditing(rowIndex)"
+                >
+                  저장
+                </button>
+                <button
+                    type="button"
+                    class="px-2 py-1 bg-red-500 text-white rounded"
+                    @click="removeRow(rowIndex)"
+                >
+                  삭제
+                </button>
+              </div>
+              <div v-else class="flex flex-row w-[150px] justify-between">
+                <button
+                    type="button"
+                    class="px-2 py-1 bg-green-500 text-white rounded mr-2"
+                    @click="saveEditing(rowIndex)"
+                >
+                  저장
+                </button>
+                <button
+                    type="button"
+                    class="px-2 py-1 bg-yellow-400 text-white rounded mr-2"
+                    @click="cancelEditing()"
+                >
+                  취소
+                </button>
+                <button
+                    type="button"
+                    class="px-2 py-1 bg-red-500 text-white rounded"
+                    @click="removeRow(rowIndex)"
+                >
+                  삭제
+                </button>
+              </div>
+            </td>
+          </tr>
+        </template>
       </VueDraggable>
     </table>
     <button
-      v-if="isEditor"
-      type="button"
-      class="mt-4 px-4 py-2 bg-green-500 text-white rounded"
-      @click="addRow"
+        v-if="isEditor"
+        type="button"
+        class="mt-4 px-4 py-2 bg-green-500 text-white rounded"
+        @click="addRow"
     >
       행 추가
     </button>
@@ -281,9 +386,9 @@ watch(
       <p class="mb-4">{{ (editingRowIdx ?? 0) + 1 }}번째 요소를 어디로 옮기시겠습니까?</p>
 
       <input
-        v-model="reOrderIndex"
-        type="number"
-        class="w-full p-2 border rounded mb-4"
+          v-model="reOrderIndex"
+          type="number"
+          class="w-full p-2 border rounded mb-4"
       />
     </ModalElement>
   </div>
