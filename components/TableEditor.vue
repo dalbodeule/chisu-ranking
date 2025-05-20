@@ -18,6 +18,10 @@ export interface Column {
   default?: string | number;
   options?: string[];
   format?: FormatText[];
+  gridRow?: number;
+  gridColumn?: number;
+  gridRowSpan?: number;
+  gridColumnSpan?: number;
 }
 
 export type IFormatTextType = "index" | "reverseIndex" | "default";
@@ -48,17 +52,21 @@ const isEditingRow = (rowId: number) => {
   return editingRowId.value === rowId;
 };
 
-const startEditing = (row: Row, rowIndex: number) => {
-  saveEditing(editingRowId.value!, false);
+const startEditing = async (row: Row, rowIndex: number) => {
+  await saveEditing(editingRowId.value!, false);
+  await nextTick();
+
   editingRowId.value = row.id;
   editingRowIdx.value = rowIndex;
   editRow.value = { ...row }; // Clone the row to prevent mutating original
 };
 
-const saveEditing = (rowIndex: number, rowRelease: boolean = true) => {
+const saveEditing = async (rowIndex: number, rowRelease: boolean = true) => {
   if (editRow.value != null) {
     rows.value[rowIndex] = { ...editRow.value }; // Assign clone to ensure reactivity
     emit("update:modelValue", rows.value);
+
+    await nextTick();
 
     if (rowRelease) {
       editingRowId.value = null;

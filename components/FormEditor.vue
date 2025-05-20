@@ -15,6 +15,10 @@ export interface Field {
   value?: string | number;
   options?: string[];
   format?: FormatText[];
+  gridRow?: number;
+  gridColumn?: number;
+  gridRowSpan?: number;
+  gridColumnSpan?: number;
 }
 
 const props = defineProps<{
@@ -148,6 +152,19 @@ watch(
 
 <template>
   <div class="mt-4">
+    <div class="grid-preview mb-4 p-4 border rounded">
+      <h3 class="font-bold mb-2">그리드 미리보기</h3>
+      <div class="grid-container" :style="{ 'grid-template-columns': 'repeat(12, 1fr)', 'gap': '4px' }">
+        <div v-for="field in fields" :key="field.id"
+             class="grid-item p-2 bg-blue-100 rounded"
+             :style="{
+            'grid-row': `${field.gridRow || 1} / span ${field.gridRowSpan || 1}`,
+            'grid-column': `${field.gridColumn || 1} / span ${field.gridColumnSpan || 1}`
+          }">
+          {{ field.label || '미지정' }}
+        </div>
+      </div>
+    </div>
     <VueDraggable v-model="fields" :delay="1000" @on-end="onDragEnd">
       <div
         v-for="(field, index) in fields"
@@ -167,6 +184,40 @@ watch(
             class="flex-1 p-2 border rounded"
             @input="updateFields"
           />
+          <div class="flex items-center space-x-2">
+            <input
+                v-model="field.gridRow"
+                type="number"
+                min="1"
+                placeholder="행"
+                class="w-16 p-2 border rounded"
+                @input="updateFields"
+            />
+            <input
+                v-model="field.gridColumn"
+                type="number"
+                min="1"
+                placeholder="열"
+                class="w-16 p-2 border rounded"
+                @input="updateFields"
+            />
+            <input
+                v-model="field.gridRowSpan"
+                type="number"
+                min="1"
+                placeholder="행 병합"
+                class="w-20 p-2 border rounded"
+                @input="updateFields"
+            />
+            <input
+                v-model="field.gridColumnSpan"
+                type="number"
+                min="1"
+                placeholder="열 병합"
+                class="w-20 p-2 border rounded"
+                @input="updateFields"
+            />
+          </div>
           <button
             type="button"
             class="px-2 py-1 bg-red-500 text-white rounded"
@@ -282,6 +333,9 @@ watch(
         </div>
       </div>
     </VueDraggable>
+    
+    
+    
     <div class="flex items-center space-x-2">
       <button
         type="button"
@@ -298,5 +352,22 @@ watch(
 select,
 input {
   min-width: 100px;
+}
+
+input[type="number"] {
+  min-width: 60px;
+}
+
+.grid-container {
+  display: grid;
+  min-height: 200px;
+  background: #f0f0f0;
+  padding: 8px;
+}
+
+.grid-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

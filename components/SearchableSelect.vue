@@ -18,6 +18,7 @@
         <!-- 검색 입력 -->
         <div class="p-2">
           <input
+            ref="searchInput"
             v-model="searchTerm"
             type="text"
             placeholder="검색..."
@@ -90,9 +91,16 @@ const selectedLabel = computed(() => {
   return found || "옵션 선택";
 });
 
+const searchInput = ref<HTMLInputElement | null>(null);
+
 // 드롭다운 열기/닫기 토글
 const toggleDropdown = () => {
   opened.value = !opened.value;
+  if (opened.value) {
+    nextTick(() => {
+      searchInput.value?.focus();
+    });
+  }
 };
 
 // 드롭다운 닫기

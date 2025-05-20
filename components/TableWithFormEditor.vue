@@ -25,33 +25,57 @@ const updateTableRows = (newRows: Row[]) => {
 
 const updateFormFields = (fields: Field[]) => {
   console.log(fields);
-  const newSection = { ...props.section };
-  // section이 존재하고 table이 정의되어 있는지 확인합니다.
+  const newSection = {...props.section};
+  if (!fields?.length && props.section?.form) {
+    fields = props.section.form;
+  }
   if (newSection && newSection.table) {
-    newSection.table.columns = fields.map((value) => {
-      return {
-        id: value.id,
-        key: value.columnKey,
-        name: value.label,
-        type: value.type,
-        default: value.value,
-        options: value.options,
-        format: value.format,
-      };
-    });
+    const newFields = fields.map((field) => ({
+      id: field.id,
+      columnKey: field.columnKey,
+      label: field.label,
+      type: field.type,
+      value: field.value,
+      options: field.options,
+      format: field.format,
+      gridRow: field.gridRow,
+      gridColumn: field.gridColumn,
+      gridRowSpan: field.gridRowSpan,
+      gridColumnSpan: field.gridColumnSpan
+    }));
+
+    newSection.table.columns = newFields.map((field) => ({
+      id: field.id,
+      key: field.columnKey,
+      name: field.label,
+      type: field.type,
+      default: field.value,
+      options: field.options,
+      format: field.format,
+      gridRow: field.gridRow,
+      gridColumn: field.gridColumn,
+      gridRowSpan: field.gridRowSpan,
+      gridColumnSpan: field.gridColumnSpan
+    }));
 
     newSection.table.columns = newSection.table.columns
-      .map((column, index) => ({
-        ...column,
-        order: index, // 각 컬럼의 order를 필드의 인덱스로 설정
-      }))
-      .sort((a, b) => a.order - b.order);
+        .map((column, index) => ({
+          ...column,
+          order: index,
+        }))
+        .sort((a, b) => a.order - b.order);
+  
+    newSection.form = newFields;
   }
-  newSection.form = fields;
-
-  // 변경된 섹션을 부모 컴포넌트로 Emit
+  
   emit("update", newSection);
 };
+
+onMounted(() => {
+  if (props.section?.form) {
+    updateFormFields(props.section.form);
+  }
+});
 </script>
 
 <template>
