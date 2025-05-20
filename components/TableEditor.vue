@@ -4,7 +4,7 @@ import ModalElement from "~/components/ModalElement.vue";
 import { VueDraggable } from "vue-draggable-plus";
 import {range} from "assets/tools";
 
-export type IFormTypes = "text" | "number" | "select" | "formatText";
+export type IFormTypes = "text" | "number" | "select" | "formatText" | "imageSelect";
 
 export interface Row {
   id: number;
@@ -19,6 +19,7 @@ export interface Column {
   default?: string | number;
   options?: string[];
   format?: FormatText[];
+  image?: { [key: string]: string };
   gridRow?: number;
   gridColumn?: number;
   gridRowSpan?: number;
@@ -278,21 +279,32 @@ watch(
                   :rowspan="column.gridRowSpan ?? 1"
                   :colspan="column.gridColumnSpan ?? 1"
               >
-                <div v-if="!isEditingRow(row.id)">
+                <div v-if="!isEditingRow(row.id)" class="flex-row items-center">
                   <span v-if="column.type === 'formatText'">
-                    {{ formatText(
-                      `${row[column.key]}`, // Directly use row[column.key] as it's the data for this column
-                      column.format,
-                      rowIndex + 1
-                  ) }}
+                    {{
+                      formatText(
+                          `${row[column.key]}`, // Directly use row[column.key] as it's the data for this column
+                          column.format,
+                          rowIndex + 1
+                      )
+                    }}
                   </span>
                   <span v-else>
                     {{ row[column.key] }}
                   </span>
+                  <div class="flex justify-center">
+                    <NuxtImg
+                        class="w-[48px]"
+                        v-if="column.type === 'imageSelect'"
+                        :src="column.image?.[row[column.key]]!!"
+                        :alt="`${row[column.key]} image.`"
+                        loading="lazy"
+                    />
+                  </div>
                 </div>
                 <div v-else>
                   <input
-                      v-if="column.type === 'text'"
+                      v-if="column.type === 'text' || column.type === 'imageSelect'"
                       v-model="editRow[column.key]"
                       class="w-full p-2 border rounded"
                   />
@@ -312,6 +324,10 @@ watch(
                       v-else-if="column.type === 'select'"
                       v-model="editRow[column.key]"
                       :options="column.options ?? []"
+                  />
+                  <NuxtImg
+                    :src="column.image?.[editRow[column.key]] ?? ''"
+                    v-if="column.type === 'imageSelect'"
                   />
                 </div>
               </td>

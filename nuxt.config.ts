@@ -22,6 +22,9 @@ export default defineNuxtConfig({
       redirectUri: process.env.REDIRECT_URI,
       apiCallUri: process.env.API_CALLURI,
     },
+    blob: {
+      uri: process.env.BLOB_URI
+    }
   },
   nitro: {
     preset: "cloudflare_module",

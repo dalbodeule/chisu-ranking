@@ -4,7 +4,6 @@ import type { Section } from "~/components/SectionElement.vue";
 import ModalElement from "~/components/ModalElement.vue";
 import LoadingSpinner from "~/components/LoadingSpinner.vue";
 import type { GetPage } from "~/server/routes/api/[userId]/[pageName].get";
-import { getUser } from "assets/tools";
 
 const { loggedIn, user } = useUserSession();
 
@@ -26,6 +25,7 @@ const removeSection = (index: number) => {
 };
 
 const loading: Ref<boolean> = ref(false);
+const chzzkProfile: Ref<IChzzkChannelUser | undefined> = ref(undefined);
 
 const loadModal: Ref<InstanceType<typeof ModalElement> | null> = ref(null);
 const loadPage = async () => {
@@ -46,6 +46,14 @@ const loadPage = async () => {
         ogType: "website",
         ogUrl: `https://ranking.mori.space/${props.userId}/${props.pageName}`,
       });
+
+      const { data: userData } = await useFetch<IChzzkChannelUser>(`/api/chzzk/user`, {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: props.userId,
+        })
+      })
+      chzzkProfile.value = userData.value ?? undefined;
     } else {
       console.log(data.value);
       throw Error("Could not load document");
@@ -61,8 +69,6 @@ const loadPage = async () => {
     loading.value = false;
   }
 };
-
-const chzzkProfile = getUser();
 
 const submitModal: Ref<InstanceType<typeof ModalElement> | null> = ref(null);
 const submitPage = async () => {

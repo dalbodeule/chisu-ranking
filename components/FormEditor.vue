@@ -15,6 +15,7 @@ export interface Field {
   value?: string | number;
   options?: string[];
   format?: FormatText[];
+  image?: { [key: string]: string };
   gridRow?: number;
   gridColumn?: number;
   gridRowSpan?: number;
@@ -31,7 +32,7 @@ const emit = defineEmits<{
 }>();
 
 const fields: Ref<Field[]> = ref([...props.fields]);
-const selectedField: Ref<string> = ref("");
+const selectedField: Ref<string[]> = ref([]);
 const requireAdd: Ref<string[]> = ref([]);
 const selectType: Ref<string> = ref("");
 const indexs: Ref<number> = ref(1);
@@ -59,14 +60,14 @@ const addOptions = (index: number, content: string) => {
   emit("update:fields", fields.value);
 };
 
-const removeOptions = (index: number) => {
-  if (fields.value[index].options != null) {
-    const field = fields.value[index].options?.find(
-      (option) => option == selectedField.value,
+const removeOptions = (fieldIdx: number) => {
+  if (fields.value[fieldIdx].options != null) {
+    const field = fields.value[fieldIdx].options?.find(
+      (option) => option == selectedField.value[fieldIdx],
     );
     if (!field) return;
 
-    const propIdx = fields.value[index].options!.indexOf(field);
+    const propIdx = fields.value[fieldIdx].options!.indexOf(field);
     fields.value.splice(propIdx, 1);
   }
   emit("update:fields", fields.value);
@@ -84,7 +85,7 @@ const getComponent = (type: IFormTypes) => {
     case "number":
       return "input";
     case "select":
-      return "select";
+    case "imageSelect":
     case "formatText":
       return "select";
     default:
@@ -121,13 +122,13 @@ const addFormats = (
   emit("update:fields", fields.value);
 };
 
-const removeFormats = (index: number) => {
-  if (fields.value[index].format != null) {
-    const field = fields.value[index].format?.find(
-      (format) => format.format == requireAdd.value[index],
+const removeFormats = (fieldIdx: number) => {
+  if (fields.value[fieldIdx].format != null) {
+    const field = fields.value[fieldIdx].format?.find(
+      (format) => format.format == requireAdd.value[fieldIdx],
     );
     if (!field) return;
-    const propIdx = fields.value[index].format!.indexOf(field);
+    const propIdx = fields.value[fieldIdx].format!.indexOf(field);
     fields.value.splice(propIdx, 1);
 
     emit("update:fields", fields.value);
@@ -137,6 +138,37 @@ const removeFormats = (index: number) => {
 const onDragEnd = () => {
   if (isUpdating.value) return;
   emit("update:fields", fields.value);
+};
+
+const handleImageUpload = async (event: Event, fieldIdx: number) => {
+  const input = event.target as HTMLInputElement;
+  if (!input.files?.length) return;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('Image upload failed');
+    }
+
+    const {url} = await response.json();
+
+    if (!selectedField.value[fieldIdx]) return;
+    if (!fields.value[fieldIdx].image) {
+      fields.value[fieldIdx].image = {};
+    }
+    fields.value[fieldIdx].image![selectedField.value[fieldIdx]] = url;
+    emit("update:fields", fields.value);
+
+  } catch (error) {
+    console.error('Error uploading image:', error);
+  }
 };
 
 watch(
@@ -167,7 +199,7 @@ watch(
     </div>
     <VueDraggable v-model="fields" :delay="1000" @on-end="onDragEnd">
       <div
-        v-for="(field, index) in fields"
+        v-for="(field, fieldIdx) in fields"
         :key="field.id"
         class="mb-4 p-4 border rounded"
       >
@@ -177,6 +209,7 @@ watch(
             <option value="number">숫자</option>
             <option value="select">선택</option>
             <option value="formatText">양식이 있는 텍스트</option>
+            <option value="imageSelect">이미지와 함께 있는 선택지</option>
           </select>
           <input
             v-model="field.label"
@@ -221,7 +254,7 @@ watch(
           <button
             type="button"
             class="px-2 py-1 bg-red-500 text-white rounded"
-            @click="removeField(index)"
+            @click="removeField(fieldIdx, )"
           >
             삭제
           </button>
@@ -234,9 +267,9 @@ watch(
             class="w-full p-2 border rounded"
             placeholder="기본값을 입력하세요."
           />
-          <div v-else-if="field.type == 'select'" class="flex flex-row gap-[20px] w-full">
+          <div v-else-if="field.type == 'select' || field.type == 'imageSelect'" class="flex flex-row gap-[20px] w-full">
             <select
-              v-model="selectedField"
+              v-model="selectedField[fieldIdx]"
               class="p-2 px-4 py-2 border rounded w-[1/3]"
               @change="updateFields"
             >
@@ -247,16 +280,33 @@ watch(
             <button
               type="button"
               class="mb-4 px-4 py-2 bg-red-500 text-white rounded"
-              @click="removeOptions(index)"
+              @click="removeOptions(fieldIdx)"
             >
               옵션 삭제
             </button>
+
+            <div v-if="field.type === 'imageSelect'" class="flex items-center gap-2">
+              <input
+                  type="file"
+                  accept="image/*"
+                  @change="(e) => handleImageUpload(e, fieldIdx)"
+                  class="border rounded p-2"
+                  :disabled="!selectedField[fieldIdx]"
+              />
+              <img
+                  v-if="selectedField[fieldIdx] && field.image?.[selectedField[fieldIdx]]"
+                  :src="field.image[selectedField[fieldIdx]]"
+                  class="w-16 h-16 object-cover rounded"
+                  alt="Selected image"
+              />
+            </div>
+
             <form
               class="flex flex-row gap-[20px]"
-              @submit.prevent="addOptions(index, requireAdd[index])"
+              @submit.prevent="addOptions(fieldIdx, requireAdd[fieldIdx])"
             >
               <input
-                v-model="requireAdd[index]"
+                v-model="requireAdd[fieldIdx]"
                 type="text"
                 class="border rounded"
                 placeholder="옵션을 입력하세요."
@@ -274,7 +324,7 @@ watch(
             class="flex flex-row gap-[20px] w-full"
           >
             <select
-              v-model="selectedField"
+              v-model="selectedField[fieldIdx]"
               class="p-2 px-4 py-2 border rounded w-[1/3]"
               @change="updateFields"
             >
@@ -289,7 +339,7 @@ watch(
             <button
               type="button"
               class="mb-4 px-4 py-2 bg-red-500 text-white rounded"
-              @click="removeFormats(index)"
+              @click="removeFormats(fieldIdx)"
             >
               옵션 삭제
             </button>
@@ -297,15 +347,15 @@ watch(
               class="flex flex-row gap-[20px]"
               @submit.prevent="
                 addFormats(
-                  index,
-                  requireAdd[index],
+                  fieldIdx,
+                  requireAdd[fieldIdx],
                   indexs,
                   selectType as IFormatTextType,
                 )
               "
             >
               <input
-                v-model="requireAdd[index]"
+                v-model="requireAdd[fieldIdx]"
                 type="text"
                 class="border rounded"
                 placeholder="포멧을 입력하세요."
@@ -333,9 +383,9 @@ watch(
         </div>
       </div>
     </VueDraggable>
-    
-    
-    
+
+
+
     <div class="flex items-center space-x-2">
       <button
         type="button"

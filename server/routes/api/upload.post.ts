@@ -1,9 +1,10 @@
 import {defineEventHandler, getRequestHeaders, readMultipartFormData} from "h3";
 import {v4 as uuidv4} from "uuid";
-import stor from "@nuxthub/core";
+
 
 export default defineEventHandler(async (event) => {
     const session = await getUserSession(event);
+    const config = useRuntimeConfig(event)
 
     if (!session?.user?.channelId) {
         throw createError({
@@ -38,7 +39,7 @@ export default defineEventHandler(async (event) => {
     });
 
     return {
-        url: `/storage/${key}`,
+        url: `${config.blob.uri}/${key}`,
         fileName: file.filename,
     };
 });
