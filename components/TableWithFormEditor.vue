@@ -84,9 +84,9 @@ onMounted(() => {
   <div>
     <TableEditor
       :columns="section.table!!.columns"
-      :model-value="section.table!!.rows"
+      v-model="section.table!!.rows"
       :is-editor="isEditor"
-      @update:model-value="updateTableRows"
+      @change="updateTableRows"
     />
     <FormEditor
       v-if="isEditor"

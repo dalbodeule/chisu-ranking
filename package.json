@@ -24,7 +24,7 @@
     "drizzle-orm": "^0.43.1",
     "nuxt": "^3.17.3",
     "vue": "latest",
-    "vue-draggable-plus": "^0.6.0"
+    "vue-draggable-next": "^2.2.1"
   },
   "devDependencies": {
     "@fortawesome/free-brands-svg-icons": "^6.7.2",

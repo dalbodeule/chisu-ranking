@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import SearchableSelect from "~/components/SearchableSelect.vue";
 import ModalElement from "~/components/ModalElement.vue";
-import { VueDraggable } from "vue-draggable-plus";
+import { VueDraggableNext } from "vue-draggable-next";
 import {range} from "assets/tools";
 
 export type IFormTypes = "text" | "number" | "select" | "formatText" | "imageSelect";
@@ -39,6 +39,7 @@ const props = defineProps<{
   modelValue: Row[];
   isEditor: boolean;
 }>();
+
 
 const emit = defineEmits<{
   "update:modelValue": [Row[]];
@@ -233,161 +234,196 @@ watch(
 </script>
 
 <template>
-  <div class="max-md:w-[1200px]">
-    <table class="table table-fixed w-full">
-      <thead>
-      <tr v-for="gridRowIndex in range(gridDimensions.maxRow + 1, 1)" :key="`th-grid-row-${gridRowIndex}`">
-        <th class="px-2 py-2 border" v-if="gridRowIndex === 1" :rowspan="gridDimensions.maxRow">순위</th>
+  <div class="overflow-x-auto">
+    <!-- 헤더 -->
+    <div
+        class="grid border border-gray-300"
+        :style="`grid-template-columns: repeat(${gridDimensions.maxCol + 2}, minmax(0, 1fr))`"
+    >
+      <!-- header rows -->
+      <template v-for="gridRowIndex in range(gridDimensions.maxRow + 1, 1)" :key="`header-row-${gridRowIndex}`">
+        <div
+            v-if="gridRowIndex === 1"
+            class="border px-2 py-2 text-center font-bold"
+            :style="`grid-row-start: ${gridRowIndex}; grid-row-end: span ${gridDimensions.maxRow}; grid-column-start: 1;`"
+        >
+          순위
+        </div>
 
-        <template v-for="column in getColumnsForGridRow(gridRowIndex, true)" :key="`th-${column.id}`">
-          <th
-              class="px-4 py-2 border"
-              :rowspan="column.gridRowSpan ?? 1"
-              :colspan="column.gridColumnSpan ?? 1"
+        <template v-for="column in getColumnsForGridRow(gridRowIndex, true)" :key="`column-header-${column.id}`">
+          <div
+              class="border px-4 py-2 text-center font-bold"
+              :style="`
+              grid-row-start: ${gridRowIndex};
+              grid-row-end: span ${column.gridRowSpan ?? 1};
+              grid-column-end: span ${column.gridColumnSpan ?? 1};
+            `"
           >
             {{ column.name }}
-          </th>
+          </div>
         </template>
 
-        <th v-if="isEditor && gridRowIndex === 1" class="px-2 py-2 border" :rowspan="gridDimensions.maxRow">작업</th>
-      </tr>
-      </thead>
-      <VueDraggable
-          v-model="rows"
-          tag="tbody"
-          :disabled="!isEditor || editingRowId != null"
-          @on-end="onDragEnd"
+        <div
+            v-if="isEditor && gridRowIndex === 1"
+            class="border px-2 py-2 text-center font-bold"
+            :style="`grid-row-start: ${gridRowIndex}; grid-row-end: span ${gridDimensions.maxRow};`"
+        >
+          작업
+        </div>
+      </template>
+    </div>
+    <!-- 데이터 행 -->
+    <VueDraggableNext
+        :list="rows"
+        tag="div"
+        :disabled="!isEditor || editingRowId != null"
+        @on-end="onDragEnd"
+    >
+      <div
+          v-for="(element, index) in rows" :key="`row-${element.id}`"
+          class="grid border border-gray-300"
+          :style="`grid-template-columns: repeat(${gridDimensions.maxCol + 2}, minmax(0, 1fr)); grid-auto-rows: minmax(50px, auto);`"
       >
-        <template v-for="(row, rowIndex) in rows" :key="`data-${row.id}`">
-          <tr v-for="gridRowIndex in range(gridDimensions.maxRow + 1, 1)" :key="`data-${row.id}-grid-row-${gridRowIndex}`" class="px-2 py-2 border text-center">
-            <td class="px-2 py-2 border text-center" v-if="gridRowIndex === 1" :rowspan="gridDimensions.maxRow">
-              {{ rowIndex + 1 }}
+        <!-- 순위 셀 -->
+        <div
+            v-if="gridDimensions.maxRow >= 1"
+            class="border px-2 py-2 text-center flex flex-col justify-center items-center"
+            :style="`grid-row-start: 1; grid-row-end: span ${gridDimensions.maxRow}; grid-column-start: 1;`"
+        >
+          {{ index + 1 }}
+          <button
+              v-if="isEditingRow(element.id)"
+              type="button"
+              class="mt-2 px-4 py-1 bg-blue-600 text-white rounded"
+              @click="openReorderModal(index)"
+          >
+            옮기기
+          </button>
+        </div>
 
-              <button
-                  v-if="isEditingRow(row.id)"
-                  type="button"
-                  class="px-4 py-1 bg-blue-600 text-white rounded"
-                  @click="openReorderModal(rowIndex)"
-              >
-                옮기기
-              </button>
-            </td>
-
-            <template v-for="column in getColumnsForGridRow(gridRowIndex)" :key="`${row.id}-${column.id}`">
-              <td
-                  class="px-4 py-2 border"
-                  :rowspan="column.gridRowSpan ?? 1"
-                  :colspan="column.gridColumnSpan ?? 1"
-              >
-                <div v-if="!isEditingRow(row.id)" class="flex-row items-center">
-                  <span v-if="column.type === 'formatText'">
-                    {{
-                      formatText(
-                          `${row[column.key]}`, // Directly use row[column.key] as it's the data for this column
-                          column.format,
-                          rowIndex + 1
-                      )
-                    }}
-                  </span>
-                  <span v-else>
-                    {{ row[column.key] }}
-                  </span>
-                  <div class="flex justify-center">
-                    <NuxtImg
-                        class="w-[48px]"
-                        v-if="column.type === 'imageSelect'"
-                        :src="column.image?.[row[column.key]]!!"
-                        :alt="`${row[column.key]} image.`"
-                        loading="lazy"
-                    />
-                  </div>
-                </div>
-                <div v-else>
-                  <input
-                      v-if="column.type === 'text' || column.type === 'imageSelect'"
-                      v-model="editRow[column.key]"
-                      class="w-full p-2 border rounded"
-                  />
-                  <input
-                      v-else-if="column.type === 'number'"
-                      v-model="editRow[column.key]"
-                      class="w-full p-2 border rounded"
-                      type="number"
-                  />
-                  <input
-                      v-else-if="column.type === 'formatText'"
-                      v-model="editRow[column.key]"
-                      class="w-full p-2 border rounded"
-                      type="text"
-                  />
-                  <SearchableSelect
-                      v-else-if="column.type === 'select'"
-                      v-model="editRow[column.key]"
-                      :options="column.options ?? []"
-                  />
+        <!-- data cells -->
+        <template v-for="gridRowIndex in range(gridDimensions.maxRow + 1, 1)" :key="`data-row-${element.id}-gridRow-${gridRowIndex}`">
+          <template v-for="column in getColumnsForGridRow(gridRowIndex)" :key="`data-${element.id}-${column.id}`">
+            <div
+                class="border px-4 py-2 text-center"
+                :style="`
+                grid-row-start: ${gridRowIndex};
+                grid-row-end: span ${column.gridRowSpan ?? 1};
+                grid-column-end: span ${column.gridColumnSpan ?? 1};
+                grid-column-start: auto;
+              `"
+            >
+              <div v-if="!isEditingRow(element.id)" class="flex flex-col items-center justify-center gap-[10px]">
+                <span v-if="column.type === 'formatText'">
+                  {{
+                    formatText(
+                        `${element[column.key]}`,
+                        column.format,
+                        index + 1
+                    )
+                  }}
+                </span>
+                <span v-else>
+                  {{ element[column.key] }}
+                </span>
+                <div class="ml-2">
                   <NuxtImg
+                      class="w-[48px]"
+                      v-if="column.type === 'imageSelect'"
+                      :src="column.image?.[element[column.key]]!!"
+                      :alt="`${element[column.key]} image.`"
+                      loading="lazy"
+                  />
+                </div>
+              </div>
+              <div v-else class="flex flex-col items-center justify-center gap-[10px]">
+                <input
+                    v-if="column.type === 'text'"
+                    v-model="editRow[column.key]"
+                    class="w-full p-2 border rounded"
+                />
+                <input
+                    v-else-if="column.type === 'number'"
+                    v-model="editRow[column.key]"
+                    class="w-full p-2 border rounded"
+                    type="number"
+                />
+                <input
+                    v-else-if="column.type === 'formatText'"
+                    v-model="editRow[column.key]"
+                    class="w-full p-2 border rounded"
+                    type="text"
+                />
+                <SearchableSelect
+                    v-else-if="column.type === 'select' || column.type === 'imageSelect'"
+                    v-model="editRow[column.key]"
+                    :options="column.options ?? []"
+                />
+                <NuxtImg
+                    class="w-[48px]"
                     :src="column.image?.[editRow[column.key]] ?? ''"
                     v-if="column.type === 'imageSelect'"
-                  />
-                </div>
-              </td>
-            </template>
-
-            <td v-if="isEditor && gridRowIndex === 1" class="px-4 py-2 border" :rowspan="gridDimensions.maxRow">
-              <div
-                  v-if="!isEditingRow(row.id)"
-                  class="flex flex-row w-[150px] justify-between"
-              >
-                <button
-                    type="button"
-                    class="px-2 py-1 bg-blue-500 text-white rounded mr-2"
-                    @click="startEditing(row, rowIndex)"
-                >
-                  편집
-                </button>
-                <button
-                    type="button"
-                    class="px-2 py-1 bg-green-500 text-white rounded mr-2"
-                    @click="saveEditing(rowIndex)"
-                >
-                  저장
-                </button>
-                <button
-                    type="button"
-                    class="px-2 py-1 bg-red-500 text-white rounded"
-                    @click="removeRow(rowIndex)"
-                >
-                  삭제
-                </button>
+                />
               </div>
-              <div v-else class="flex flex-row w-[150px] justify-between">
-                <button
-                    type="button"
-                    class="px-2 py-1 bg-green-500 text-white rounded mr-2"
-                    @click="saveEditing(rowIndex)"
-                >
-                  저장
-                </button>
-                <button
-                    type="button"
-                    class="px-2 py-1 bg-yellow-400 text-white rounded mr-2"
-                    @click="cancelEditing()"
-                >
-                  취소
-                </button>
-                <button
-                    type="button"
-                    class="px-2 py-1 bg-red-500 text-white rounded"
-                    @click="removeRow(rowIndex)"
-                >
-                  삭제
-                </button>
-              </div>
-            </td>
-          </tr>
+            </div>
+          </template>
         </template>
-      </VueDraggable>
-    </table>
+
+        <!-- 작업(작업 영역) -->
+        <div
+            v-if="isEditor"
+            class="border px-4 py-2"
+            :style="`grid-row-start: 1; grid-row-end: span ${gridDimensions.maxRow};`"
+        >
+          <div v-if="!isEditingRow(element.id)" class="flex flex-row justify-center items-center align-middle w-[150px]">
+            <button
+                type="button"
+                class="px-2 py-1 bg-blue-500 text-white rounded mr-2"
+                @click="startEditing(element, index)"
+            >
+              편집
+            </button>
+            <button
+                type="button"
+                class="px-2 py-1 bg-green-500 text-white rounded mr-2"
+                @click="saveEditing(index)"
+            >
+              저장
+            </button>
+            <button
+                type="button"
+                class="px-2 py-1 bg-red-500 text-white rounded"
+                @click="removeRow(index)"
+            >
+              삭제
+            </button>
+          </div>
+          <div v-else class="flex flex-row justify-between w-[150px]">
+            <button
+                type="button"
+                class="px-2 py-1 bg-green-500 text-white rounded mr-2"
+                @click="saveEditing(index)"
+            >
+              저장
+            </button>
+            <button
+                type="button"
+                class="px-2 py-1 bg-yellow-400 text-white rounded mr-2"
+                @click="cancelEditing()"
+            >
+              취소
+            </button>
+            <button
+                type="button"
+                class="px-2 py-1 bg-red-500 text-white rounded"
+                @click="removeRow(index)"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      </div>
+    </VueDraggableNext>
     <button
         v-if="isEditor"
         type="button"

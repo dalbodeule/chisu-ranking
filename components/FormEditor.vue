@@ -5,7 +5,7 @@ import type {
   IFormTypes,
   IFormatTextType,
 } from "~/components/TableEditor.vue";
-import { VueDraggable } from "vue-draggable-plus";
+import { VueDraggableNext } from "vue-draggable-next";
 
 export interface Field {
   id: number;
@@ -197,7 +197,7 @@ watch(
         </div>
       </div>
     </div>
-    <VueDraggable v-model="fields" :delay="1000" @on-end="onDragEnd">
+    <VueDraggableNext v-model="fields" :delay="1000" @on-end="onDragEnd">
       <div
         v-for="(field, fieldIdx) in fields"
         :key="field.id"
@@ -382,7 +382,7 @@ watch(
           </div>
         </div>
       </div>
-    </VueDraggable>
+    </VueDraggableNext>
 
 
 
