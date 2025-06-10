@@ -38,7 +38,7 @@ const loadPage = async () => {
     })
     if (data.value?.content) {
       console.log(data.value.content);
-      store.loadDocument(data.value.content);
+      await store.loadDocument(data.value.content);
 
       useSeoMeta({
         title: `${data.value.author.name} - ${props.pageName} :: 치수랭킹`,
@@ -135,9 +135,15 @@ onBeforeUnmount(() => {
       class="text-gray-700 flex flex-row gap-[10px] items-center"
     >
       <NuxtImg
+        v-if="!!chzzkProfile?.channelImageUrl"
         class="w-[48px] h-[48px] rounded-[48px] border border-gray-500 mr-[10px]"
         :src="chzzkProfile?.channelImageUrl"
         :alt="`${chzzkProfile?.channelName} 프로필 이미지`"
+      />
+      <NuxtImg v-else
+       src="/undefined.png"
+       alt="User Profile Image"
+       class="w-16 h-16 rounded-full border-2 border-gray-300"
       />
       <NuxtLink
         :to="`/${chzzkProfile?.channelId}`"
@@ -151,7 +157,7 @@ onBeforeUnmount(() => {
     <div class="mt-6 space-y-6">
       <SectionElement
         v-for="(section, index) in sections"
-        :key="`${section.id}`"
+        :key="`${index}`"
         :section="section"
         :is-editor="isEditor"
         @update="updateSection(index, $event)"

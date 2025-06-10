@@ -86,13 +86,16 @@ onMounted(async () => {
 <template>
   <div class="container mx-auto p-4">
     <div class="user-profile flex items-center space-x-4 mb-4">
-      <img
-        v-if="chzzkProfile"
+      <NuxtImg v-if="!!chzzkProfile?.channelImageUrl"
         :src="chzzkProfile.channelImageUrl"
         alt="User Profile Image"
         class="w-16 h-16 rounded-full border-2 border-gray-300"
       />
-      <p v-else class="text-gray-500">Loading profile image...</p>
+      <NuxtImg v-else
+         src="/undefined.png"
+         alt="User Profile Image"
+         class="w-16 h-16 rounded-full border-2 border-gray-300"
+      />
     </div>
 
     <div class="user-pages">

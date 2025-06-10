@@ -5,6 +5,7 @@ export const useDocumentStore = defineStore("document", {
     sections: [] as Section[],
     history: [] as Section[][],
     currentHistoryIndex: -1,
+    forceReload: false,
   }),
   actions: {
     saveState() {
@@ -43,11 +44,15 @@ export const useDocumentStore = defineStore("document", {
     saveDocument(): string {
       return JSON.stringify(this.sections, null, 2);
     },
-    loadDocument(data: string) {
+    async loadDocument(data: string) {
       try {
+        this.forceReload = true
+        await nextTick();
         this.sections = JSON.parse(data);
         this.history = [JSON.parse(JSON.stringify(this.sections))];
         this.currentHistoryIndex = 0;
+        await nextTick();
+        this.forceReload = false
       } catch (e) {
         console.error(`Error! ${e}`);
       }

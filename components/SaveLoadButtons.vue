@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useDocumentStore } from "~/stores/documentStore";
+import { useMagicKeys } from "@vueuse/core"
+import {UAParser} from "ua-parser-js";
 
 const store = useDocumentStore();
 
@@ -25,28 +27,44 @@ const redo = () => {
   store.redo();
 };
 
-const keyEventHandler = (e: KeyboardEvent) => {
-  if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "z") {
-    e.preventDefault();
-    undo();
-  }
-  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "z") {
-    e.preventDefault();
-    redo();
-  }
-  if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "s") {
-    e.preventDefault();
-    save();
-  }
-};
+const { Ctrl_Z, Ctrl_Shift_Z, Meta_Z, Meta_Shift_Z } = useMagicKeys();
 
-onMounted(() => {
-  window.addEventListener("keydown", (e) => keyEventHandler(e));
-});
+const uap = new UAParser();
 
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", (e) => keyEventHandler(e));
-});
+const isMacFamily = computed(() => {
+  const os = uap.getOS()
+  switch(os.name) {
+    case 'macOS':
+    case 'ios':
+      return true
+    default:
+      return false
+  }
+})
+watch(Ctrl_Z, (ev) => {
+  if(ev && !isMacFamily) {
+    console.log("undo checked.")
+    undo()
+  }
+})
+watch(Meta_Z, (ev) => {
+  if(ev && isMacFamily) {
+    console.log("undo checked.")
+    undo()
+  }
+})
+watch(Ctrl_Shift_Z, (ev) => {
+  if(ev && isMacFamily) {
+    console.log("redo checked.")
+    redo()
+  }
+})
+watch(Meta_Shift_Z, (ev) => {
+  if(ev && isMacFamily) {
+    console.log("redo checked.")
+    redo()
+  }
+})
 </script>
 
 <template>

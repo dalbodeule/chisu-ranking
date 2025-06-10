@@ -57,15 +57,20 @@ const logged = getUser();
           >로그아웃</NuxtLink
         >
         <div class="text-gray-700 flex flex-row gap-[20px] items-center">
-          <NuxtLink
+          <NuxtLink v-if="logged?.channelId"
             :to="`/${logged?.channelId}`"
             class="text-gray-700 hover:text-blue-500"
             >{{ logged?.channelName }}</NuxtLink
           >
-          <NuxtImg
-            class="w-[36px] h-[36px] rounded-[48px] border border-gray-500"
-            :src="logged?.channelImageUrl"
-            :alt="`${logged?.channelName} 프로필 이미지`"
+          <NuxtImg v-if="!!logged?.channelImageUrl"
+             :src="logged.channelImageUrl"
+             alt="User Profile Image"
+             class="w-[36px] h-[36px] rounded-full border-2 border-gray-300"
+          />
+          <NuxtImg v-else
+             src="/undefined.png"
+             alt="User Profile Image"
+             class="w-[36px] h-[36px] rounded-full border-2 border-gray-300"
           />
         </div>
       </div>

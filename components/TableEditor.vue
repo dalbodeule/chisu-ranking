@@ -3,6 +3,7 @@ import SearchableSelect from "~/components/SearchableSelect.vue";
 import ModalElement from "~/components/ModalElement.vue";
 import { VueDraggableNext } from "vue-draggable-next";
 import {range} from "assets/tools";
+import {useDocumentStore} from "~/stores/documentStore";
 
 export type IFormTypes = "text" | "number" | "select" | "formatText" | "imageSelect";
 
@@ -36,7 +37,6 @@ export interface FormatText {
 
 const props = defineProps<{
   columns: Column[];
-  modelValue: Row[];
   isEditor: boolean;
 }>();
 
@@ -45,7 +45,9 @@ const emit = defineEmits<{
   "update:modelValue": [Row[]];
 }>();
 
-const rows: Ref<Row[]> = ref([...props.modelValue]);
+const rows = defineModel<Row[]>();
+
+const store = useDocumentStore();
 
 const editingRowId = ref<number | null>(null);
 const editingRowIdx = ref<number | null>(null);
@@ -66,8 +68,7 @@ const startEditing = async (row: Row, rowIndex: number) => {
 
 const saveEditing = async (rowIndex: number, rowRelease: boolean = true) => {
   if (editRow.value != null) {
-    rows.value[rowIndex] = { ...editRow.value }; // Assign clone to ensure reactivity
-    emit("update:modelValue", rows.value);
+    rows.value!![rowIndex] = { ...editRow.value }; // Assign clone to ensure reactivity
 
     await nextTick();
 
@@ -90,17 +91,15 @@ const addRow = () => {
   props.columns.forEach((col) => {
     newRow[col.key] = col.default || "";
   });
-  rows.value.push(newRow);
-  emit("update:modelValue", rows.value);
+  rows.value!!.push(newRow);
 };
 
 const removeRow = (index: number) => {
-  rows.value.splice(index, 1);
-  emit("update:modelValue", rows.value);
+  rows.value!!.splice(index, 1);
 };
 
 const onDragEnd = () => {
-  emit("update:modelValue", rows.value);
+  emit("update:modelValue", rows.value!!);
 };
 
 const gridDimensions = computed(() => {
@@ -200,9 +199,9 @@ const openReorderModal = async (rowIndex: number) => {
     const targetIndex = reOrderIndex.value - 1;
 
     // `targetIndex`가 배열 범위 내에 있어야 함
-    if (targetIndex >= 0 && targetIndex <= rows.value.length) {
-      const itemToMove = rows.value.splice(rowIndex, 1)[0];
-      rows.value.splice(targetIndex, 0, itemToMove); // `targetIndex` 위치로 삽입
+    if (targetIndex >= 0 && targetIndex <= rows.value!!.length) {
+      const itemToMove = rows.value!!.splice(rowIndex, 1)[0];
+      rows.value!!.splice(targetIndex, 0, itemToMove); // `targetIndex` 위치로 삽입
     }
   }
 };
@@ -214,7 +213,7 @@ const formatText = (text: string, format: FormatText[] | undefined, index: numbe
   if (forwardIndexFormat) return forwardIndexFormat.format.replace("{text}", text);
 
   const reverseIndexFormat = format.find(
-      (f) => f.type === "reverseIndex" && f.index === rows.value.length - index + 1,
+      (f) => f.type === "reverseIndex" && f.index === rows.value!!.length - index + 1,
   );
   if (reverseIndexFormat) return reverseIndexFormat.format.replace("{text}", text);
 
@@ -223,14 +222,6 @@ const formatText = (text: string, format: FormatText[] | undefined, index: numbe
 
   return text;
 };
-
-watch(
-    rows,
-    (newRows: Row[]) => {
-      emit("update:modelValue", newRows);
-    },
-    {deep: true},
-);
 </script>
 
 <template>
@@ -238,7 +229,7 @@ watch(
     <!-- 헤더 -->
     <div
         class="grid border border-gray-300"
-        :style="`grid-template-columns: repeat(${gridDimensions.maxCol + 2}, minmax(0, 1fr))`"
+        :style="`grid-template-columns: repeat(${gridDimensions.maxCol + (isEditor ? 2 : 1)}, minmax(0, 1fr))`"
     >
       <!-- header rows -->
       <template v-for="gridRowIndex in range(gridDimensions.maxRow + 1, 1)" :key="`header-row-${gridRowIndex}`">
@@ -282,7 +273,7 @@ watch(
       <div
           v-for="(element, index) in rows" :key="`row-${element.id}`"
           class="grid border border-gray-300"
-          :style="`grid-template-columns: repeat(${gridDimensions.maxCol + 2}, minmax(0, 1fr)); grid-auto-rows: minmax(50px, auto);`"
+          :style="`grid-template-columns: repeat(${gridDimensions.maxCol + (isEditor ? 2 : 1)}, minmax(0, 1fr)); grid-auto-rows: minmax(50px, auto);`"
       >
         <!-- 순위 셀 -->
         <div
