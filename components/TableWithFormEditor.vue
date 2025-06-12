@@ -1,33 +1,24 @@
 <script setup lang="ts">
 import type { Section } from "~/components/SectionElement.vue";
-import type { Column, Row } from "~/components/TableEditor.vue";
 import type { Field } from "~/components/FormEditor.vue";
+import type {Row} from "~/components/TableEditor.vue";
 
 const props = defineProps<{
-  section: Section;
-  isEditor: boolean;
-}>();
+  section: Section,
+  isEditor: boolean,
+}>()
 const emit = defineEmits<{
-  update: [Section];
-}>();
+  'update:section': [Section],
+}>()
 
-const updateTableRows = (newRows: Row[]) => {
-  const newSection = { ...props.section };
-
-  newSection.table = {
-    ...newSection.table,
-    rows: newRows,
-  } as { rows: Row[]; columns: Column[] };
-  newSection.form = props.section.form;
-
-  emit("update", newSection);
-};
+const section = ref<Section>(props.section)
+const isEditor = ref<boolean>(props.isEditor)
 
 const updateFormFields = (fields: Field[]) => {
-  console.log(fields);
-  const newSection = {...props.section};
-  if (!fields?.length && props.section?.form) {
-    fields = props.section.form;
+  const newSection = useCloneDeep(section.value)
+
+  if (!fields?.length && section.value?.form) {
+    fields = section.value?.form;
   }
   if (newSection && newSection.table) {
     const newFields = fields.map((field) => ({
@@ -68,30 +59,35 @@ const updateFormFields = (fields: Field[]) => {
         .sort((a, b) => a.order - b.order);
   
     newSection.form = newFields;
+
+    section.value = newSection;
   }
-  
-  emit("update", newSection);
 };
 
-onMounted(() => {
-  if (props.section?.form) {
-    updateFormFields(props.section.form);
-  }
-});
+const updateRows = (rows: Row[]) => {
+  if(!section.value?.table?.rows) return;
+
+  const copiedSection = useCloneDeep(section.value)
+  copiedSection.table!!.rows = rows;
+
+  section.value = copiedSection;
+}
+
+watch(() => props.section, () => emit('update:section', section.value), { deep: true });
 </script>
 
 <template>
   <div>
     <TableEditor
-      :columns="section.table!!.columns"
-      v-model="section.table!!.rows"
-      :is-editor="isEditor"
-      @change="updateTableRows"
+      :columns="section?.table?.columns ?? []"
+      :rows="section?.table?.rows ?? []"
+      :is-editor="isEditor ?? false"
+      @update:rows="updateRows"
     />
     <FormEditor
       v-if="isEditor"
-      :columns="section.table!!.columns"
-      :fields="section.form!!"
+      :columns="section?.table?.columns ?? []"
+      :fields="section?.form ?? []"
       @update:fields="updateFormFields"
     />
   </div>

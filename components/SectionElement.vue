@@ -41,10 +41,6 @@ const getSectionComponent = (type: ISectionType) => {
 const updateSection = (updatedContent: Section) => {
   emit("update", updatedContent);
 };
-
-const removeSection = () => {
-  emit("remove");
-};
 </script>
 
 <template>
@@ -53,12 +49,10 @@ const removeSection = () => {
       :is="getSectionComponent(section.type)"
       :id="`${section.id}`"
       :section="section"
-      :model-value="section.content"
       :table="section.table"
       :form="section.form"
       :is-editor="isEditor"
-      @update="updateSection"
-      @remove="removeSection"
+      @update:section="updateSection"
     />
     <button
       v-if="isEditor"

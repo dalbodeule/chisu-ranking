@@ -41,6 +41,7 @@ export default defineNuxtConfig({
     "nuxt-auth-utils",
     "@vesp/nuxt-fontawesome",
     "@nuxt/image",
+    "nuxt-lodash"
   ],
   fontawesome: {
     icons: {

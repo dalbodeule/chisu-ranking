@@ -41,6 +41,7 @@
     "eslint-plugin-prettier": "^5.4.0",
     "nuxt-auth-utils": "^0.5.20",
     "nuxt-csurf": "^1.6.5",
+    "nuxt-lodash": "^2.5.3",
     "prettier": "^3.5.3",
     "sass-embedded": "^1.89.0",
     "wrangler": "^4.15.2"

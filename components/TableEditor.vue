@@ -37,17 +37,23 @@ export interface FormatText {
 
 const props = defineProps<{
   columns: Column[];
+  rows: Row[];
   isEditor: boolean;
 }>();
-
-
 const emit = defineEmits<{
-  "update:modelValue": [Row[]];
-}>();
+  'update:rows': [Row[]]
+}>()
 
-const rows = defineModel<Row[]>();
+const rows = ref<Row[]>(props.rows);
+const rowCopy = computed({
+  get: () => useCloneDeep(props.rows),
+  set: (value: Row[]) => {
+    rows.value = value
+    emit('update:rows', value)
+  }
+})
 
-const store = useDocumentStore();
+const lastMove = ref<number>(Date.now());
 
 const editingRowId = ref<number | null>(null);
 const editingRowIdx = ref<number | null>(null);
@@ -96,10 +102,6 @@ const addRow = () => {
 
 const removeRow = (index: number) => {
   rows.value!!.splice(index, 1);
-};
-
-const onDragEnd = () => {
-  emit("update:modelValue", rows.value!!);
 };
 
 const gridDimensions = computed(() => {
@@ -265,13 +267,12 @@ const formatText = (text: string, format: FormatText[] | undefined, index: numbe
     </div>
     <!-- 데이터 행 -->
     <VueDraggableNext
-        :list="rows"
+        v-model="rowCopy"
         tag="div"
         :disabled="!isEditor || editingRowId != null"
-        @on-end="onDragEnd"
     >
       <div
-          v-for="(element, index) in rows" :key="`row-${element.id}`"
+          v-for="(element, index) in rows" :key="`row-${element.id}-${lastMove}`"
           class="grid border border-gray-300"
           :style="`grid-template-columns: repeat(${gridDimensions.maxCol + (isEditor ? 2 : 1)}, minmax(0, 1fr)); grid-auto-rows: minmax(50px, auto);`"
       >
