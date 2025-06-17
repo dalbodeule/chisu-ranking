@@ -6,28 +6,21 @@ import "@toast-ui/editor/dist/i18n/ko-kr";
 import colorSyntax from "@toast-ui/editor-plugin-color-syntax";
 import "tui-color-picker/dist/tui-color-picker.css";
 import "@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css";
-import type { Section } from "~/components/SectionElement.vue";
 
 const props = defineProps<{
-  section: Section;
   id: string;
+  content: string;
 }>();
 const emit = defineEmits<{
-  "update:section": [Section];
-}>();
-
-const content = ref<string | undefined>(props.section?.content)
-
+  'update:content': [string];
+}>()
+const content = ref<string>(props.content);
 const editor = ref(`${props.id}`);
 
-const changeHandler = () => {
-  const copiedSection = useCloneDeep(props.section)
-  copiedSection.content = content.value
-
-  emit("update:section", copiedSection)
-}
+watch(() => props.content, () => { emit("update:content", content.value); });
 
 onMounted(() => {
+  console.log(content.value)
   const e = new Editor({
     el: editor.value,
     height: "500px",
@@ -35,9 +28,6 @@ onMounted(() => {
     initialValue: content.value,
     previewStyle: "tab",
     language: "ko-KR",
-    events: {
-      change: changeHandler,
-    },
     hooks: {
       addImageBlobHook: async (
           blob: Blob,

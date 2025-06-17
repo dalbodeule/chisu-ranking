@@ -5,13 +5,12 @@ export const useDocumentStore = defineStore("document", {
     sections: [] as Section[],
     history: [] as Section[][],
     currentHistoryIndex: -1,
-    forceReload: false,
   }),
   actions: {
     saveState() {
       this.currentHistoryIndex++;
       this.history = this.history.slice(0, this.currentHistoryIndex);
-      this.history.push(JSON.parse(JSON.stringify(this.sections)));
+      this.history.push(useCloneDeep(this.sections));
     },
     addSection(section: Section) {
       this.saveState();
@@ -28,17 +27,13 @@ export const useDocumentStore = defineStore("document", {
     undo() {
       if (this.currentHistoryIndex > 0) {
         this.currentHistoryIndex--;
-        this.sections = JSON.parse(
-          JSON.stringify(this.history[this.currentHistoryIndex]),
-        );
+        this.sections = useCloneDeep(this.history[this.currentHistoryIndex]);
       }
     },
     redo() {
       if (this.currentHistoryIndex < this.history.length - 1) {
         this.currentHistoryIndex++;
-        this.sections = JSON.parse(
-          JSON.stringify(this.history[this.currentHistoryIndex]),
-        );
+        this.sections = useCloneDeep(this.history[this.currentHistoryIndex]);
       }
     },
     saveDocument(): string {
@@ -46,13 +41,13 @@ export const useDocumentStore = defineStore("document", {
     },
     async loadDocument(data: string) {
       try {
-        this.forceReload = true
+        this.sections = [];
+        this.history = [];
+        this.currentHistoryIndex = -1;
         await nextTick();
-        this.sections = JSON.parse(data);
-        this.history = [JSON.parse(JSON.stringify(this.sections))];
+        this.history = [JSON.parse(data)];
         this.currentHistoryIndex = 0;
-        await nextTick();
-        this.forceReload = false
+        this.sections = useCloneDeep(this.history[0]);
       } catch (e) {
         console.error(`Error! ${e}`);
       }

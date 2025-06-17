@@ -20,6 +20,7 @@ export interface Section {
 const props = defineProps<{
   section: Section;
   isEditor: boolean;
+
 }>();
 
 const emit = defineEmits<{

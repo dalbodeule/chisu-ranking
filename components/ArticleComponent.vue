@@ -32,17 +32,17 @@ const loadPage = async () => {
   try {
     loading.value = true;
     await nextTick();
-    const { data } = await useFetch<GetPage>(`/api/${props.userId}/${props.pageName}`, {
+    const data = await $fetch<GetPage>(`/api/${props.userId}/${props.pageName}`, {
       method: 'GET',
       credentials: 'include',
     })
-    if (data.value?.content) {
-      console.log(data.value.content);
-      await store.loadDocument(data.value.content);
+    if (data.content) {
+      console.log(data.content);
+      await store.loadDocument(data.content);
 
       useSeoMeta({
-        title: `${data.value.author.name} - ${props.pageName} :: 치수랭킹`,
-        description: data.value.content.substring(0, 150),
+        title: `${data.author.name} - ${props.pageName} :: 치수랭킹`,
+        description: data.content.substring(0, 150),
         ogType: "website",
         ogUrl: `https://ranking.mori.space/${props.userId}/${props.pageName}`,
       });
@@ -55,7 +55,7 @@ const loadPage = async () => {
       })
       chzzkProfile.value = userData.value ?? undefined;
     } else {
-      console.log(data.value);
+      console.log(data);
       throw Error("Could not load document");
     }
   } catch (e) {
@@ -78,7 +78,7 @@ const submitPage = async () => {
 
     loading.value = true;
 
-    const result = (await $fetch(
+    const result = await $fetch<GetPage>(
       `/api/${props.userId}/${encodeURIComponent(props.pageName)}`,
       {
         method: "POST",
@@ -87,7 +87,7 @@ const submitPage = async () => {
           "Content-Type": "application/json",
         },
       },
-    )) as GetPage | undefined;
+    )
 
     if (result) {
       console.log("complete");
@@ -157,7 +157,7 @@ onBeforeUnmount(() => {
     <div class="mt-6 space-y-6">
       <SectionElement
         v-for="(section, index) in sections"
-        :key="`${index}`"
+        :key="`${props.pageName}-${index}`"
         :section="section"
         :is-editor="isEditor"
         @update="updateSection(index, $event)"
